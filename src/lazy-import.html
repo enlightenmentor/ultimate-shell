@@ -1,0 +1,49 @@
+<dom-module id="lazy-import">
+  <script>
+    class LazyImport extends Polymer.Element {
+
+      static get is() {
+        return "lazy-import";
+      }
+
+      static get properties() {
+        return {
+          href: String,
+          loaded: {
+            type: Boolean,
+            value: false,
+            reflectToAttribute: true
+          },
+          active: {
+            type: Boolean,
+            value: false,
+            observer: "_importElement"
+          },
+        }
+      }
+
+      _importElement(active) {
+        if (!active || this.loaded)
+          return;
+        Polymer.importHref(this.href,
+          function onLoad(e) {
+            this.fire("lazy-loaded", e);
+            this.loaded = true;
+            console.log("loaded");
+          }.bind(this),
+          function onError(err) {
+            throw new Error(err);
+          }.bind(this));
+      }
+
+      fire(name, detail) {
+        this.dispatchEvent(new CustomEvent(name, {
+          composed: true,
+          bubbles: true,
+          detail: detail
+        }));
+      }
+    }
+    customElements.define(LazyImport.is, LazyImport);
+  </script>
+</dom-module>

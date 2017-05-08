@@ -1,0 +1,67 @@
+<link rel="import" href="../bower_components/iron-location/iron-location.html">
+
+<dom-module id="app-router">
+  <template>
+    <iron-location id="ironLocation" path="{{_path}}"></iron-location>
+  </template>
+  <script>
+    class AppRouter extends Polymer.Element {
+
+      static get is() {
+        return "app-router";
+      }
+
+      static get observers() {
+        return ["_pathChanged(_path)"];
+      }
+
+      connectedCallback() {
+        super.connectedCallback();
+        this._pathChanged();
+      }
+
+      _pathChanged() {
+        this.fire("route-changed", AppRouter.parseUrl(location));
+      }
+
+      setUrl(url) {
+        if (AppRouter.parseUrl(location).url !== url) {
+          window.history.pushState({}, null, url);
+          this.fire("route-changed", AppRouter.parseUrl(location));
+        }
+      }
+
+      getUrl() {
+        AppRouter.parseUrl(location);
+      }
+
+      fire(name, detail) {
+        this.dispatchEvent(new CustomEvent(name, {composed: true, bubbles: true, detail: detail}));
+      }
+
+      static parseUrl(location) {
+        let res = {
+          path: location.pathname.substr(1),
+          search: location.search.substr(1),
+          hash: location.hash.substr(1),
+          url: AppRouter.pathSearchHashToURL(location.pathname, location.search, location.hash)
+        };
+        if (res.path)
+          res.segments = res.path.split("/").filter(item => item !== "");
+        if (res.search) {
+          res.queries = {};
+          res.search.split("&").map(function (q) {
+            let pair = q.split("=");
+            res.queries[pair[0]] = pair[1];
+          });
+        }
+        return res;
+      }
+
+      static pathSearchHashToURL(path, search, hash) {
+        return (path || "") + (search || "") + (hash || "");
+      }
+    }
+    customElements.define(AppRouter.is, AppRouter);
+  </script>
+</dom-module>

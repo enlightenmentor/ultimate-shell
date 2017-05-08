@@ -1,0 +1,52 @@
+<link rel="import" href="../bower_components/paper-styles/paper-styles.html">
+
+<dom-module id="app-toolbar">
+  <template>
+    <style>
+      :host {
+        display: flex;
+        height: 56px;
+        box-sizing: border-box;
+        position: relative;
+        flex-direction: row;
+        align-items: center;
+        user-select: none;
+        padding: 0 8px 0;
+        background-color: var(--paper-indigo-500);
+        @apply --shadow-elevation-4dp;
+      }
+      slot[name='title']::slotted(*) {
+        margin-left: 8px;
+        color: white;
+        @apply --paper-font-title;
+      }
+      @media (min-width: 600px) {
+        :host {
+          height: 64px;
+          padding: 0 16px 0;
+          z-index: 1;
+        }
+        slot[name='title']::slotted(*) {
+          margin-left: 16px;
+        }
+      }
+    </style>
+
+    <slot></slot>
+    <slot name="title"></slot>
+
+  </template>
+
+  <script>
+    class AppToolbar extends Polymer.Element {
+      static get is() {
+        return "app-toolbar";
+      }
+
+      static get properties() {
+        return {}
+      }
+    }
+    customElements.define(AppToolbar.is, AppToolbar);
+  </script>
+</dom-module>

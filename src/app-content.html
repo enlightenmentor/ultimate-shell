@@ -1,0 +1,50 @@
+<link rel="import" href="../bower_components/paper-styles/paper-styles.html">
+
+<dom-module id="app-content">
+  <template>
+    <style>
+      :host {
+        display: block;
+        height: calc(100vh - 56px);
+        box-sizing: border-box;
+        margin-left: 256px;
+        padding: 12px 18px;
+        overflow-y: auto;
+        transition: margin-left 200ms;
+      }
+      :host([fullwidth]) {
+        margin-left: 0;
+      }
+      @media (min-width: 600px) {
+        :host {
+          height: calc(100vh - 64px);
+        }
+      }
+    </style>
+
+    <slot></slot>
+
+  </template>
+
+  <script>
+    class AppContent extends Polymer.Element {
+      static get is() {
+        return "app-content";
+      }
+
+      static get properties() {
+        return {
+          fullwidth: {
+            type: Boolean,
+            reflectToAttribute: true
+          }
+        }
+      }
+
+      toggleWidth() {
+        this.fullwidth = !this.fullwidth;
+      }
+    }
+    customElements.define(AppContent.is, AppContent);
+  </script>
+</dom-module>

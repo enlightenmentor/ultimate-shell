@@ -1,0 +1,25 @@
+<script src="https://www.gstatic.com/firebasejs/3.9.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/3.9.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/3.9.0/firebase-database.js"></script>
+<script src="https://www.gstatic.com/firebasejs/3.9.0/firebase-storage.js"></script>
+
+<dom-module id="firebase-app">
+  <script>
+    class FirebaseApp extends Polymer.Element {
+      static get is() {
+        return "firebase-app";
+      }
+      connectedCallback() {
+        super.connectedCallback();
+        firebase.initializeApp({
+          apiKey: "AIzaSyCsaCy5xQKr7-H23fvHZX9vbZklxo4mKks",
+          authDomain: "lynleser-2017.firebaseapp.com",
+          databaseURL: "https://lynleser-2017.firebaseio.com",
+          storageBucket: "lynleser-2017.appspot.com",
+          messagingSenderId: "740631213903"
+        });
+      }
+    }
+    customElements.define(FirebaseApp.is, FirebaseApp);
+  </script>
+</dom-module>

@@ -1,0 +1,18 @@
+{
+  "entrypoint": "index.html",
+  "shell": "src/app-shell.html",
+  "fragments": [],
+  "sources": [
+   "src/**/*",
+   "images/**/*",
+   "bower.json",
+   "favicon.ico"
+  ],
+  "extraDependencies": [
+    "manifest.json",
+    ".firebaserc",
+    "firebase.json",
+    "database.rules.json",
+    "bower_components/webcomponentsjs/webcomponents-loader.js"
+  ]
+}
