@@ -1,0 +1,31 @@
+<html><head></head><body><dom-module id="page-two">
+  <template>
+    <style>
+      :host {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+        height: calc(100vh - 56px);
+        padding: 12px 16px;
+        background-color: var(--paper-blue-100);
+      }
+      @media (min-width: 700px) {
+        :host {
+          height: calc(100vh - 64px);
+        }
+      }
+    </style>  
+
+    Page Two
+
+  </template>
+
+  <script>
+    class PageTwo extends Polymer.Element {
+      static get is() {
+        return "page-two";
+      }
+    }
+    customElements.define(PageTwo.is, PageTwo);
+  </script>
+</dom-module></body></html>

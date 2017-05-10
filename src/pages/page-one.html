@@ -1,0 +1,31 @@
+<dom-module id="page-one">
+  <template>
+    <style>
+      :host {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+        height: calc(100vh - 56px);
+        padding: 12px 16px;
+        background-color: var(--paper-blue-100);
+      }
+      @media (min-width: 700px) {
+        :host {
+          height: calc(100vh - 64px);
+        }
+      }
+    </style>  
+
+    Page One
+
+  </template>
+
+  <script>
+    class PageOne extends Polymer.Element {
+      static get is() {
+        return "page-one";
+      }
+    }
+    customElements.define(PageOne.is, PageOne);
+  </script>
+</dom-module>

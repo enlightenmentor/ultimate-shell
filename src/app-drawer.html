@@ -1,0 +1,414 @@
+<link rel="import" href="../bower_components/paper-styles/shadow.html">
+
+<dom-module id="app-drawer">
+  <template>
+    <style>
+      :host {
+        position: fixed;
+        top: 0px;
+        right: 0;
+        bottom: 0px;
+        left: 0;
+        visibility: hidden;
+        transition-property: visibility;
+      }
+      :host([opened]) {
+        visibility: visible;
+      }
+      :host([persistent]) {
+        width: var(--app-drawer-width, 256px);
+      }
+      :host([persistent][position=left]) {
+        right: auto;
+      }
+      :host([persistent][position=right]) {
+        left: auto;
+      }
+      #drawerContent {
+        display: -webkit-box;
+        display: -ms-flexbox;
+        display: flex;
+        -webkit-box-sizing: border-box;
+                box-sizing: border-box;
+        -webkit-box-orient: vertical;
+        -webkit-box-direction: normal;
+        -ms-flex-direction: column;
+            flex-direction: column;
+        width: var(--app-drawer-width, 256px);
+        -webkit-box-sizing: border-box;
+                box-sizing: border-box;
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        transition-property: -webkit-transform;
+        transition-property: transform;
+        -webkit-transform: translate3d(-100%, 0, 0);
+        transform: translate3d(-100%, 0, 0);
+        background-color: #FFF;
+
+        @apply --shadow-elevation-16dp;
+        @apply --app-drawer-content;
+      }
+      #drawerContent::after {
+        width: 20px;
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        left: 100%;
+        visibility: visible;
+        content: '';
+      }
+      :host([persistent]) > #drawerContent {
+        width: 100%;
+        padding-top: 64px;
+        border-right: 1px solid var(--paper-grey-300);
+
+        @apply --shadow-none;
+      }
+      :host([position=right]) > #drawerContent {
+        right: 0;
+        left: auto;
+        -webkit-transform: translate3d(100%, 0, 0);
+        transform: translate3d(100%, 0, 0);
+      }
+      :host([position=right]) > #drawerContent::after {
+        right: 100%;
+        left: auto;
+      }
+      :host([opened]) > #drawerContent {
+        -webkit-transform: translate3d(0, 0, 0);
+        transform: translate3d(0, 0, 0);
+      }
+      #scrim {
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        transition-property: opacity;
+        -webkit-transform: translateZ(0);
+        transform:  translateZ(0);
+        opacity: 0;
+        background: var(--app-drawer-scrim-background, rgba(0, 0, 0, 0.5));
+      }
+      :host([opened]) > #scrim {
+        opacity: 1;
+      }
+      :host([opened][persistent]) > #scrim {
+        visibility: hidden;
+        opacity: 0;
+      }
+    </style>
+
+    <div id="scrim" on-tap="close"></div>
+
+    <div id="drawerContent">
+      <slot></slot>
+    </div>
+
+  </template>
+
+  <script>
+    class AppDrawer extends Polymer.GestureEventListeners(Polymer.Element) {
+      static get is() {
+        return "app-drawer";
+      }
+
+      static get properties() {
+        return {
+          opened: {
+            type: Boolean,
+            value: false,
+            notify: true,
+            reflectToAttribute: true
+          },
+          persistent: {
+            type: Boolean,
+            value: false,
+            reflectToAttribute: true
+          },
+          align: {
+            type: String,
+            value: 'left'
+          },
+          position: {
+            type: String,
+            readOnly: true,
+            reflectToAttribute: true,
+            computed: "_resetPosition(align)"
+          }
+        }
+      }
+
+      static get observers() {
+        return [
+          '_styleTransitionDuration(transitionDuration)',
+          '_openedPersistentChanged(opened, persistent)',
+          '_notifyOpened(opened)'
+        ]
+      }
+
+      constructor() {
+        super();
+        this.transitionDuration = 200;
+        this._translateOffset = 0;
+        this._trackDetails = null;
+        this._drawerState = "init";
+        Polymer.Gestures.addListener(this, 'track', this._track.bind(this));
+      }
+
+      open() {
+        this.opened = true;
+      }
+
+      close() {
+        this.opened = false;
+      }
+
+      toggle() {
+        this.opened = !this.opened;
+      }
+
+      _resetPosition(align) {
+        return align;
+      }
+
+      _track(e) {
+        if (this.persistent)
+          return;
+
+        e.preventDefault();
+
+        switch (e.detail.state) {
+          case 'start':
+            this._trackStart(e);
+            break;
+          case 'track':
+            this._trackMove(e);
+            break;
+          case 'end':
+            this._trackEnd(e);
+            break;
+        }
+      }
+
+      _trackStart(e) {
+        this._drawerState = "tracking";
+
+        this._styleTransitionDuration(0);
+        this.style.visibility = 'visible';
+
+        var rect = this.$.drawerContent.getBoundingClientRect();
+        if (this.position === 'left') {
+          this._translateOffset = rect.left;
+        } else {
+          this._translateOffset = rect.right - window.innerWidth;
+        }
+
+        this._trackDetails = []; // why??
+      }
+
+      _trackMove(e) {
+        this._translateDrawer(e.detail.dx + this._translateOffset);
+        this._trackDetails.push({ // why??
+          dx: e.detail.dx,
+          timeStamp: Date.now()
+        });
+      }
+
+      _trackEnd(e) {
+        var x = e.detail.dx + this._translateOffset;
+        var drawerWidth = this.$.drawerContent.offsetWidth;
+        var isPositionLeft = this.position === 'left';
+        var isInEndState = isPositionLeft ? (x >= 0 || x <= -drawerWidth) :
+          (x <= 0 || x >= drawerWidth);
+
+        if (!isInEndState) {
+          // No longer need the track es after this method returns - allow them to be GC'd.
+          var trackDetails = this._trackDetails;
+          this._trackDetails = null;
+
+          this._flingDrawer(e, trackDetails);
+          if (this._drawerState === "flinging") {
+            return;
+          }
+        }
+
+        // If the drawer is not flinging, toggle the opened state based on the position of
+        // the drawer.
+        var halfWidth = drawerWidth / 2;
+        if (e.detail.dx < -halfWidth) {
+          this.opened = this.position === 'right';
+        } else if (e.detail.dx > halfWidth) {
+          this.opened = this.position === 'left';
+        }
+
+        if (isInEndState) {
+          this.debounce('_resetStateDebouncer', this._resetDrawerState);
+        } else {
+          this.debounce('_resetStateDebouncer', this._resetDrawerState, this.transitionDuration);
+        }
+
+        this._styleTransitionDuration(this.transitionDuration);
+        this._resetDrawerTranslate();
+        this.style.visibility = '';
+      }
+
+      _calculateVelocity(e, trackDetails) {
+        // Find the oldest track e that is within 100ms using binary search.
+        var now = Date.now();
+        var timeLowerBound = now - 100;
+        var trackDetail;
+        var min = 0;
+        var max = trackDetails.length - 1;
+
+        while (min <= max) {
+          // Floor of average of min and max.
+          var mid = (min + max) >> 1;
+          var d = trackDetails[mid];
+          if (d.timeStamp >= timeLowerBound) {
+            trackDetail = d;
+            max = mid - 1;
+          } else {
+            min = mid + 1;
+          }
+        }
+
+        if (trackDetail) {
+          var dx = e.detail.dx - trackDetail.dx;
+          var dt = (now - trackDetail.timeStamp) || 1;
+          return dx / dt;
+        }
+        return 0;
+      }
+
+      _flingDrawer(e, trackDetails) {
+        var velocity = this._calculateVelocity(e, trackDetails);
+
+        // Do not fling if velocity is not above a threshold.
+        if (Math.abs(velocity) < 0.2) {
+          return;
+        }
+
+        this._drawerState = "flinging";
+
+        var x = e.detail.dx + this._translateOffset;
+        var drawerWidth = this.$.drawerContent.offsetWidth;
+        var isPositionLeft = this.position === 'left';
+        var isVelocityPositive = velocity > 0;
+        var isClosingLeft = !isVelocityPositive && isPositionLeft;
+        var isClosingRight = isVelocityPositive && !isPositionLeft;
+        var dx;
+        if (isClosingLeft) {
+          dx = -(x + drawerWidth);
+        } else if (isClosingRight) {
+          dx = (drawerWidth - x);
+        } else {
+          dx = -x;
+        }
+
+        // Enforce a minimum transition velocity to make the drawer feel snappy.
+        if (isVelocityPositive) {
+          velocity = Math.max(velocity, 1.2);
+          this.opened = this.position === 'left';
+        } else {
+          velocity = Math.min(velocity, -1.2);
+          this.opened = this.position === 'right';
+        }
+
+        // Calculate the amount of time needed to finish the transition based on the
+        // initial slope of the timing function.
+        var t = 1.5 * dx / velocity
+        this._styleTransitionDuration(t);
+        this._styleTransitionTimingFunction('cubic-bezier(0.667, 1, 0.667, 1)');
+
+        this._resetDrawerTranslate();
+        this.debounce('_resetStateDebouncer', this._resetDrawerState, t);
+      }
+
+      _styleTransitionDuration(duration) {
+        this.style.transitionDuration = duration + 'ms';
+        this.$.drawerContent.style.transitionDuration = duration + 'ms';
+        this.$.scrim.style.transitionDuration = duration + 'ms';
+      }
+
+      _styleTransitionTimingFunction(timingFunction) {
+        this.$.drawerContent.style.transitionTimingFunction = timingFunction;
+        this.$.scrim.style.transitionTimingFunction = timingFunction;
+      }
+
+      _translateDrawer(x) {
+        var drawerWidth = this.$.drawerContent.offsetWidth;
+
+        if (this.position === 'left') {
+          x = Math.max(-drawerWidth, Math.min(x, 0));
+          this.$.scrim.style.opacity = 1 + x / drawerWidth;
+        } else {
+          x = Math.max(0, Math.min(x, drawerWidth));
+          this.$.scrim.style.opacity = 1 - x / drawerWidth;
+        }
+
+        this.$.drawerContent.style.transform = "translate3d(" + x + "px, 0, 0)";
+      }
+
+      _resetDrawerTranslate() {
+        this.$.scrim.style.opacity = "";
+        this.$.drawerContent.style.transform = "";
+      }
+
+      _resetDrawerState() {
+        var oldState = this._drawerState;
+
+        // If the drawer was flinging, we need to reset the style attributes.
+        if (oldState === "flinging") {
+          this._styleTransitionDuration(this.transitionDuration);
+          this._styleTransitionTimingFunction('');
+          this.style.visibility = '';
+        }
+
+        if (this.opened) {
+          this._drawerState = this.persistent ? "opened-persistent" : "opened";
+        } else {
+          this._drawerState = "closed";
+        }
+
+        if (oldState !== this._drawerState) {
+          if (this._drawerState === "closed") {
+            document.body.style.overflow = 'hidden';
+          } else {
+            document.body.style.overflow = '';
+          }
+        }
+      }
+
+      _notifyOpened(opened) {
+        if (opened)
+          return this.fire("drawer-opened");
+        return this.fire("drawer-closed");
+      }
+
+      _openedPersistentChanged() {
+        // Use a debounce timer instead of transitionend since transitionend won't fire when
+        // app-drawer is display: none.
+        this.debounce('_resetStateDebouncer', this._resetDrawerState, this.transitionDuration);
+      }
+
+      debounce(name, callback, interval) {
+        this[name] = Polymer.Debouncer.debounce(
+          this[name],
+          Polymer.Async.timeOut.after(interval),
+          callback.bind(this));
+      }
+
+      fire(name, detail) {
+        this.dispatchEvent(new CustomEvent(name, {
+          composed: true,
+          bubbles: true,
+          detail: detail
+        }))
+      }
+    }
+    customElements.define(AppDrawer.is, AppDrawer);
+  </script>
+</dom-module>

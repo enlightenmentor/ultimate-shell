@@ -1,28 +1,87 @@
-<html><head><link rel="import" href="../bower_components/paper-styles/paper-styles.html">
+<html><head><link rel="import" href="../bower_components/iron-pages/iron-pages.html">
 
 </head><body><dom-module id="app-content">
   <template>
     <style>
       :host {
-        display: block;
+        display: flex;
         height: calc(100vh - 56px);
         box-sizing: border-box;
-        margin-left: 256px;
-        padding: 12px 18px;
+        align-items: center;
+        justify-content: center;
         overflow-y: auto;
         transition: margin-left 200ms;
       }
-      :host([fullwidth]) {
+      :host([persistent]) {
         margin-left: 0;
       }
-      @media (min-width: 600px) {
+      :host(:not([persistent])[squeezed]) {
+        margin-left: 256px;
+      }
+      @media (min-width: 700px) {
         :host {
           height: calc(100vh - 64px);
         }
       }
+      iron-pages {
+        width: 100%;
+      }
+      svg {
+        position: absolute;
+        transform-origin: center;
+        animation: Rotation 2.5s linear infinite;
+      }
+      svg[hidden] {
+        display: none;
+      }
+      svg path {
+        fill: transparent;
+        stroke-dasharray: 31.42;
+        stroke-dashoffset: -7.855;
+        animation: Loading 2s linear infinite, ColorChange 5s linear infinite;
+      }
+      @keyframes Loading {
+        0% {
+          stroke-dashoffset: -31.42;
+        }
+        100% {
+          stroke-dashoffset: 31.42;
+        }
+      }
+      @keyframes ColorChange {
+        0% {
+          stroke: var(--google-red-500);
+        }
+        25% {
+          stroke: var(--google-blue-500);
+        }
+        50% {
+          stroke: var(--google-green-500);
+        }
+        75% {
+          stroke: var(--google-yellow-500);
+        }
+        100% {
+          stroke: var(--google-red-500);
+        }
+      }
+      @keyframes Rotation {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg)
+        }
+      }
     </style>
 
-    <slot></slot>
+    <svg width="50" height="50" viewBox="0 0 12 12" xmlns="http://www.w3.org/2000/svg" hidden$="[[!loading]]">
+      <path d="M1,6a5,5 0 1,0 10,0a5,5 0 1,0 -10,0"></path>
+    </svg>
+
+    <iron-pages selected="[[page]]" fallback-selection="404" attr-for-selected="id" selected-attribute="current">
+      <slot></slot>
+    </iron-pages>
 
   </template>
 
@@ -34,15 +93,54 @@
 
       static get properties() {
         return {
-          fullwidth: {
+          page: {
+            type: String,
+            observer: "_newPage"
+          },
+          loading: Boolean,
+          persistent: {
             type: Boolean,
+            reflectToAttribute: true
+          },
+          squeezed: {
+            type: Boolean,
+            value: false,
             reflectToAttribute: true
           }
         }
       }
 
-      toggleWidth() {
-        this.fullwidth = !this.fullwidth;
+      toggle() {
+        this.squeezed = !this.squeezed;
+      }
+
+      _newPage(page) {
+        document.title = this._makeTitle(page);
+        this._loadPage(page);
+      }
+
+      _loadPage(page) {
+        this.loading = true;
+        Polymer.importHref("src/pages/page-" + page + ".html",
+          function onLoad(e) {
+            this.loading = false;
+            this.fire("page-loaded", page);
+          }.bind(this),
+          function onError(err) {
+            throw new Error(err);
+          }.bind(this), true);
+      }
+
+      _makeTitle(page) {
+        return page[0].toUpperCase() + page.substr(1) + " - Ultimate Shell";
+      }
+
+      fire(name, detail) {
+        this.dispatchEvent(new CustomEvent(name, {
+          composed: true,
+          bubbles: true,
+          detail: detail
+        }))
       }
     }
     customElements.define(AppContent.is, AppContent);

@@ -1,0 +1,31 @@
+<html><head></head><body><dom-module id="page-home">
+  <template>
+    <style>
+      :host {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+        height: calc(100vh - 56px);
+        padding: 12px 16px;
+        background-color: var(--paper-red-100);
+      }
+      @media (min-width: 700px) {
+        :host {
+          height: calc(100vh - 64px);
+        }
+      }
+    </style>  
+
+    Home
+
+  </template>
+
+  <script>
+    class PageHome extends Polymer.Element {
+      static get is() {
+        return "page-home";
+      }
+    }
+    customElements.define(PageHome.is, PageHome);
+  </script>
+</dom-module></body></html>

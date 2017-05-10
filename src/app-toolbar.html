@@ -1,4 +1,5 @@
-<link rel="import" href="../bower_components/paper-styles/paper-styles.html">
+<link rel="import" href="../bower_components/paper-styles/shadow.html">
+<link rel="import" href="../bower_components/paper-styles/typography.html">
 
 <dom-module id="app-toolbar">
   <template>
@@ -12,28 +13,26 @@
         align-items: center;
         user-select: none;
         padding: 0 8px 0;
-        background-color: var(--paper-indigo-500);
         @apply --shadow-elevation-4dp;
       }
-      slot[name='title']::slotted(*) {
+      #titleStyle {
         margin-left: 8px;
         color: white;
+        text-transform: capitalize;
         @apply --paper-font-title;
       }
-      @media (min-width: 600px) {
-        :host {
-          height: 64px;
-          padding: 0 16px 0;
-          z-index: 1;
-        }
-        slot[name='title']::slotted(*) {
-          margin-left: 16px;
-        }
+      :host([persistent]) {
+        height: 64px;
+        padding: 0 16px 0;
+        z-index: 1;
+      }
+      :host([persistent]) #titleStyle {
+        margin-left: 16px;
       }
     </style>
 
-    <slot></slot>
-    <slot name="title"></slot>
+    <slot name="menu"></slot>
+    <span id="titleStyle">[[title]]</span>
 
   </template>
 
@@ -44,7 +43,13 @@
       }
 
       static get properties() {
-        return {}
+        return {
+          title: String,
+          persistent: {
+            type: Boolean,
+            reflectToAttribute: true
+          }
+        }
       }
     }
     customElements.define(AppToolbar.is, AppToolbar);
