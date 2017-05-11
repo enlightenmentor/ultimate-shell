@@ -5,7 +5,7 @@
     <style>
       :host {
         display: block;
-        height: calc(100vh - 56px);
+        height: calc(100vh - 64px);
         box-sizing: border-box;
         position: relative;
         overflow-y: auto;
@@ -17,10 +17,8 @@
       :host(:not([persistent])[squeezed]) {
         margin-left: 256px;
       }
-      @media (min-width: 700px) {
-        :host {
-          height: calc(100vh - 64px);
-        }
+      :host([persistent]) {
+        height: calc(100vh - 56px);
       }
       iron-pages {
         width: 100%;
@@ -99,7 +97,7 @@
     </div>
 
     <iron-pages selected="[[page]]" fallback-selection="404"
-                attr-for-selected="id" selected-attribute="current">
+                attr-for-selected="page" selected-attribute="current">
       <slot></slot>
     </iron-pages>
 
@@ -135,13 +133,16 @@
       }
 
       _newPage(page) {
+        if (!this.querySelector("[page='"+page+"']"))
+          page = "404";
+        
         document.title = this._makeTitle(page);
         this._loadPage(page);
       }
 
       _loadPage(page) {
         this.loading = true;
-        let tagName = this.querySelector("#" + page).localName;
+        let tagName = this.querySelector("[page='"+page+"']").localName;
         let src = "src/pages/" + tagName + ".html";
         Polymer.importHref(src,
           function onLoad(e) {

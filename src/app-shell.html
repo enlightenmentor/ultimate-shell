@@ -14,6 +14,7 @@
 <link rel="import" href="app-toolbar.html">
 <link rel="import" href="app-drawer.html">
 <link rel="import" href="app-content.html">
+<link rel="import" href="app-snackbar.html">
 
 <dom-module id="app-shell">
   <template>
@@ -92,33 +93,33 @@
 
     <app-router on-route-changed="_getRoute"></app-router>
 
-    <iron-media-query query="(min-width: 700px)" query-matches="{{queryMin700}}"></iron-media-query>
+    <iron-media-query query="(min-width: 600px)" query-matches="{{queryMin600}}"></iron-media-query>
     <iron-media-query query="(max-width: 900px)" query-matches="{{queryMax900}}"></iron-media-query>
 
-    <app-toolbar persistent="[[queryMin700]]" title="[[currentPage]]">
+    <app-toolbar persistent="[[queryMin600]]" title="[[currentPage]]">
       <paper-icon-button slot="menu" icon="menu" on-tap="_toggleDrawer"></paper-icon-button>
     </app-toolbar>
 
-    <app-drawer id="drawer" opened="[[!queryMax900]]" persistent="[[queryMin700]]">
+    <app-drawer id="drawer" opened="[[!queryMax900]]" persistent="[[queryMin600]]">
       <div id="drawerHeader">
         Best App Shell
       </div>
       <div id="drawerMenu">
-        <iron-selector selected="[[currentPage]]" attr-for-selected="id">
-          <a href="/home" id="home" on-tap="_closeMobileDrawer">
+        <iron-selector selected="[[currentPage]]" attr-for-selected="page">
+          <a href="/home" page="home" on-tap="_closeMobileDrawer">
             <paper-ripple></paper-ripple>
             <span>Home</span>
           </a>
-          <a href="/one" id="one" on-tap="_closeMobileDrawer">
+          <a href="/one" page="one" on-tap="_closeMobileDrawer">
             <paper-ripple></paper-ripple>
             <span>Page One</span>
           </a>
-          <a href="/two" id="two" on-tap="_closeMobileDrawer">
+          <a href="/two" page="two" on-tap="_closeMobileDrawer">
             <paper-ripple></paper-ripple>
             <span>Page Two</span>
           </a>
           <div id="separator"></div>
-          <a href="/settings" id="settings" on-tap="_closeMobileDrawer">
+          <a href="/settings" page="settings" on-tap="_closeMobileDrawer">
             <paper-ripple></paper-ripple>
             <iron-icon icon="settings"></iron-icon>
             <span>Settings</span>
@@ -127,15 +128,15 @@
       </div>
     </app-drawer>
 
-    <app-content id="content" page="[[currentPage]]" persistent="[[!queryMin700]]" squeezed="[[!queryMax900]]">
-      <page-home id="home"></page-home>
-      <page-one id="one"></page-one>
-      <page-two id="two"></page-two>
-      <page-404 id="404"></page-404>
-      <page-settings id="settings"></page-settings>
+    <app-content id="content" page="[[currentPage]]" persistent="[[!queryMin600]]" squeezed="[[!queryMax900]]">
+      <page-home page="home"></page-home>
+      <page-one page="one"></page-one>
+      <page-two page="two"></page-two>
+      <page-404 page="404"></page-404>
+      <page-settings page="settings"></page-settings>
     </app-content>
 
-    <app-snackbar></app-snackbar>
+    <app-snackbar id="snackback"></app-snackbar>
 
     <app-dialog></app-dialog>
 
@@ -165,28 +166,39 @@
         }
       }
 
+      constructor() {
+        super();
+        window.addEventListener("online", (e) => this._showSnackback("The device is online"));
+        window.addEventListener("offline", (e) => this._showSnackback("The device is offline"));
+      }
+
       connectedCallback() {
         super.connectedCallback();
         this.removeAttribute('unresolved');
       }
 
       _getRoute(e) {
-        if (e.detail.segments)
+        if (e.detail.segments) {
           this.currentPage = e.detail.segments[0];
-        else
+        } else {
           history.pushState({}, null, "/home");
           this.fire("location-changed");
+        }
       }
 
       _toggleDrawer() {
         this.$.drawer.toggle();
-        if (this.queryMin700)
+        if (this.queryMin600)
           this.$.content.squeezed = this.$.drawer.opened;
       }
 
       _closeMobileDrawer() {
-        if (!this.queryMin700)
+        if (!this.queryMin600)
           this.$.drawer.close();
+      }
+
+      _showSnackback(text) {
+        this.$.snackback.show(text);
       }
 
       fire(name, detail) {

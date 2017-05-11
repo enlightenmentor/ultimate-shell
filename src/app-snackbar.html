@@ -1,0 +1,128 @@
+<link rel="import" href="../bower_components/paper-styles/shadow.html">
+<link rel="import" href="../bower_components/paper-styles/typography.html">
+
+<dom-module id="app-snackbar">
+  <template>
+    <style>
+      :host {
+        display: block;
+        position: absolute;
+        bottom: 0;
+      }
+      #body {
+        display: flex;
+        box-sizing: border-box;
+        width: 100vw;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 24px;
+        background-color: #323232;
+        color: white;
+
+        @apply --shadow-elevation-6dp;
+        @apply --paper-font-body1;
+      }
+      :host([active]) {
+        transform: translateY(0);
+        transition: transform cubic-bezier(0.0, 0.0, 0.2, 1) 0.3s;
+      }
+      :host(:not([active])) {
+        transform: translateY(calc(100px + 24px));
+        transition: transform cubic-bezier(0.4, 0.0, 1, 1) 0.25s;
+      }
+      :host([refresh]) #body {
+        animation: RefreshMobile 0.2s;
+      }
+      #button {
+        margin-left: 24px;
+        color: var(--paper-yellow-a200);
+        text-transform: uppercase;
+        cursor: pointer;
+      }
+      @media (min-width: 600px) {
+        :host {
+          right: 0;
+          margin: 24px;
+        }
+        #body {
+          width: auto;
+          min-width: 288px;
+          max-width: 568px;
+          border-radius: 2px;
+        }
+        :host([refresh]) #body {
+          animation: Refresh 0.2s;
+        }
+      }
+      @keyframes Refresh {
+        0% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.05);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+      @keyframes RefreshMobile {
+        0% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(30%);
+        }
+        100% {
+          transform: translateY(0);
+        }
+      }
+    </style>
+
+    <div id="body">
+      <span>[[text]]</span>
+      <span id="button" on-tap="_action">Close</span>
+    </div>
+
+  </template>
+
+  <script>
+    class AppSnackbar extends Polymer.GestureEventListeners(Polymer.Element) {
+      static get is() {
+        return "app-snackbar";
+      }
+
+      static get properties() {
+        return {
+          active: {
+            type: Boolean,
+            value: false,
+            reflectToAttribute: true
+          },
+          text: String
+        }
+      }
+
+      show(text) {
+        this.removeAttribute("refresh");
+        if (this.active && this.text !== text)
+          setTimeout( () => this.setAttribute("refresh", ""), 0 );
+
+        this.active = true;
+        this.text = text;
+
+        if (this._timeout)
+          clearTimeout(this._timeout);
+        this._timeout = setTimeout( () => this._hide(), 3000 );
+      }
+
+      _hide() {
+        this.active = false;
+      }
+
+      _action() {
+        this._hide();
+      }
+    }
+    customElements.define(AppSnackbar.is, AppSnackbar);
+  </script>
+</dom-module>
