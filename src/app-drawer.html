@@ -11,12 +11,14 @@
         left: 0;
         visibility: hidden;
         transition-property: visibility;
+        z-index: 1;
       }
       :host([opened]) {
         visibility: visible;
       }
       :host([persistent]) {
         width: var(--app-drawer-width, 256px);
+        z-index: 0;
       }
       :host([persistent][position=left]) {
         right: auto;
