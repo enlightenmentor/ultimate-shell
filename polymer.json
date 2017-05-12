@@ -2,11 +2,11 @@
   "entrypoint": "index.html",
   "shell": "src/app-shell.html",
   "fragments": [
-    "src/pages/page-home",
-    "src/pages/page-one",
-    "src/pages/page-two",
-    "src/pages/page-settings",
-    "src/pages/page-404"
+    "src/pages/page-home.html",
+    "src/pages/page-one.html",
+    "src/pages/page-two.html",
+    "src/pages/page-settings.html",
+    "src/pages/page-404.html"
   ],
   "sources": [
    "src/**/*",

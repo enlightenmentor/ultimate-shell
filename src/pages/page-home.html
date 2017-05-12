@@ -7,7 +7,7 @@
         height: 100%;
         box-sizing: border-box;
         padding: 12px 16px;
-        background-color: var(--paper-red-100);
+        background-color: var(--light-secondary-color);
       }
     </style>  
 
@@ -16,7 +16,7 @@
   </template>
 
   <script>
-    class PageHome extends Polymer.Element {
+    class PageHome extends Polymer.GestureEventListeners(Polymer.Element) {
       static get is() {
         return "page-home";
       }

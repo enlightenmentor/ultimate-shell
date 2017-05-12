@@ -16,7 +16,7 @@
   </template>
 
   <script>
-    class Page404 extends Polymer.Element {
+    class Page404 extends Polymer.GestureEventListeners(Polymer.Element) {
       static get is() {
         return "page-404";
       }

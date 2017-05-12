@@ -1,22 +1,44 @@
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+
+<link rel="import" href="../css/css-reset.html">
+
+<link rel="import" href="../app-dialog.html" async>
+
 <dom-module id="page-settings">
   <template>
-    <style>
+    <style include="css-reset">
       :host {
-        display: block;
+        display: flex;
         width: 100%;
         height: 100%;
         box-sizing: border-box;
+        align-items: center;
+        justify-content: center;
         padding: 12px 16px;
-        background-color: var(--paper-green-100);
+        background-color: var(--light-secondary-color);
+      }
+      #dialogButton {
+        background-color: var(--dark-secondary-color);
+        color: white;
       }
     </style>  
 
-    Settings
+    <paper-button id="dialogButton" on-tap="_openDialog" raised>Open Dialog</paper-button>
+    
+    <app-dialog id="dialog">
+      <span slot="title">Test Dialog</span>
+
+      <p slot="content">This is test dialog from the setting page. Try to type smth below and press 'Submit'</p>
+      <paper-input slot="content" label="Type here" value="{{dialogData.input::input}}"></paper-input>
+
+      <paper-button slot="actions" on-tap="_closeDialog">Close</paper-button>
+      <paper-button slot="actions" on-tap="_submitDialog">Submit</paper-button>
+    </app-dialog>
 
   </template>
 
   <script>
-    class PageSettings extends Polymer.Element {
+    class PageSettings extends Polymer.GestureEventListeners(Polymer.Element) {
       static get is() {
         return "page-settings";
       }
@@ -26,8 +48,27 @@
           fullwidth: {
             type: Boolean,
             reflectToAttribute: true
+          },
+          dialogData: {
+            type: Object,
+            value: function() {
+              return {};
+            }
           }
         }
+      }
+
+      _openDialog() {
+        this.$.dialog.open();
+      }
+
+      _closeDialog() {
+        this.$.dialog.close();
+      }
+
+      _submitDialog() {
+        this.fire("dialog-submitted", this.dialogData);
+        this.$.dialog.close();
       }
 
       fire(name, detail) {
