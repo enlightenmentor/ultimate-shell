@@ -11,7 +11,7 @@
       }
     </style>  
 
-    Home
+    Hello [[user.name]]
 
   </template>
 
@@ -19,6 +19,12 @@
     class PageHome extends Polymer.GestureEventListeners(Polymer.Element) {
       static get is() {
         return "page-home";
+      }
+
+      static get properties() {
+        return {
+          user: Object
+        }
       }
     }
     customElements.define(PageHome.is, PageHome);

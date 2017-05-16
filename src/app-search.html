@@ -1,0 +1,260 @@
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="../bower_components/iron-selector/iron-selector.html">
+<link rel="import" href="../bower_components/paper-styles/shadow.html">
+<link rel="import" href="../bower_components/paper-styles/color.html">
+<link rel="import" href="../bower_components/paper-styles/typography.html">
+
+<link rel="import" href="css/css-reset.html">
+
+<dom-module id="app-search">
+  <template>
+    <style include="css-reset">
+      :host {
+        display: flex;
+        box-sizing: border-box;
+        height: 64px;
+        flex-direction: row;
+        flex: 1;
+        padding: 8px 0;
+        pointer-events: auto;
+      }
+      :host(:not([closed])) {
+        max-width: 60vw;
+        margin-left: auto;
+      }
+      #search {
+        display: flex;
+        flex-direction: column;
+        box-sizing: border-box;
+        width: 100%;
+        position: relative;
+      }
+      :host([closed]:not([focused])) {
+        pointer-events: none;
+      }
+      :host(:not([focused])) #inputBox {
+        background-color: rgba(255,255,255,0.2);
+        color: rgba(255,255,255,1);
+      }
+      :host([closed]:not([focused])) #inputBox {
+        background-color: transparent;
+      }
+      #inputBox {
+        display: flex;
+        width: 100%;
+        height: 100%;
+        border-radius: 2px 2px 0 0;
+        position: relative;
+        align-items: center;
+        justify-content: flex-end;
+        background-color: rgba(255,255,255,1);
+        color: black;
+        z-index: 2;
+      }
+      paper-icon-button {
+        margin: 0 8px;
+        pointer-events: auto;
+      }
+      :host([focused]) paper-icon-button {
+        --paper-icon-button-ink-color: transparent;
+      }
+      input {
+        flex: 1;
+        height: 100%;
+        border: none;
+        outline: none;
+        background-color: transparent;
+        font-family: 'Roboto';
+        font-size: 16px;
+        font-weight: 400;
+        overflow: hidden;
+      }
+      :host([closed]:not([focused])) input {
+        display: none;
+      }
+      :host(:not([focused])) input {
+        color: rgba(255,255,255,0.8);
+      }
+      :host(:not([focused])) input::-webkit-input-placeholder { /* Chrome/Opera/Safari */
+        color: rgba(255,255,255,0.8);
+      }
+      :host(:not([focused])) input::-moz-placeholder { /* Firefox 19+ */
+        color: rgba(255,255,255,0.8);
+      }
+      :host(:not([focused])) input::-ms-input-placeholder { /* IE 10+ */
+        color: rgba(255,255,255,0.8);
+      }
+      :host(:not([focused])) input::-moz-placeholder { /* Firefox 18- */
+        color: rgba(255,255,255,0.8);
+      }
+      #suggestions {
+        display: flex;
+        box-sizing: border-box;
+        flex-direction: column;
+        width: 100%;
+        max-height: 60vh;
+        border-radius: 0 0 2px 2px;
+        position: absolute;
+        top: 100%;
+        border-top: 1px solid var(--paper-grey-300);
+        background-color: white;
+        overflow-y: auto;
+        @apply --shadow-elevation-8dp;
+      }
+      :host(:not([focused])) #suggestions {
+        display: none;
+      }
+      .suggestion {
+        display: flex;
+        box-sizing: border-box;
+        position: relative;
+        align-items: center;
+        padding: 8px 16px;
+        font-family: 'Roboto';
+        font-size: 16px;
+        font-weight: 400;
+      }
+      .suggestion:hover, .suggestion.iron-selected {
+        background-color: var(--paper-grey-100);
+      }
+      .suggestion:first-of-type {
+        margin-top: 8px;
+      }
+      .suggestion:last-of-type {
+        margin-bottom: 8px;
+      }
+      #outerSpace {
+        display: block;
+        position: fixed;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+      }
+      :host(:not([focused])) #outerSpace {
+        display: none;
+      }
+    </style>
+
+    <div id="search">
+      <div id="inputBox">
+        <paper-icon-button icon="search"></paper-icon-button>
+        <input id="input" placeholder="Search" on-focus="_focus" value="{{value::input}}">
+      </div>
+      <div id="suggestions" hidden$="[[!value]]">
+        <iron-selector id="selector" selectable=".suggestion" selected="0">
+          <template is="dom-repeat" items="[[suggestions]]">
+            <a href="/[[item]]" class="suggestion" on-tap="_blur">[[item]]</a>
+          </template>
+        </iron-selector>
+      </div>
+    </div>
+
+  </template>
+
+  <script>
+    class AppSearch extends Polymer.GestureEventListeners(Polymer.Element) {
+      static get is() {
+        return "app-search";
+      }
+
+      static get properties() {
+        return {
+          closed: {
+            value: true,
+            reflectToAttribute: true
+          },
+          focused: {
+            type: Boolean,
+            value: false,
+            reflectToAttribute: true
+          },
+          value: {
+            type: String,
+            value: "",
+            observer: "_searchRequest"
+          },
+          suggestions: {
+            type: Array,
+            value: () => [
+              "result0",
+              "result1",
+              "result2",
+              "result3",
+              "result4",
+              "result5",
+              "result6",
+              "result7",
+              "result8",
+              "result9"
+            ]
+          }
+        }
+      }
+
+      constructor() {
+        super();
+        Polymer.Gestures.addListener(window, "tap", (e) => this._handleTap(e) );
+        window.addEventListener("keydown", (e) => this._handleKeyPress(e) );
+      }
+
+      _searchRequest(str) {
+        this.fire("search-request", str);
+      }
+
+      _handleTap(e) {
+        if (e.path.find( (i) => i.localName === "app-search" ))
+          this._focus();
+        else 
+          this._blur();
+      }
+
+      _focus(e) {
+        if (e)
+          e.stopPropagation();
+        this.focused = true;
+      }
+
+      _blur(e) {
+        if (e)
+          e.stopPropagation();
+        this.focused = false;
+        this.value = "";
+        this.$.selector.select(0);
+        this.$.input.blur();
+      }
+
+      _handleKeyPress(e) {
+        if (!this.focused)
+          return;
+        switch (e.key) {
+          case "Escape":
+            this._blur();
+            break;
+          case "Enter":
+            this.$.selector.selectedItem.click();
+            break;
+          case "ArrowUp":
+            e.preventDefault();
+            this.$.selector.selectPrevious();
+            this.$.selector.selectedItem.scrollIntoViewIfNeeded();
+            break;
+          case "ArrowDown":
+            e.preventDefault();
+            this.$.selector.selectNext();
+            this.$.selector.selectedItem.scrollIntoViewIfNeeded();
+            break;
+        }
+      }
+
+      fire(name, detail) {
+        this.dispatchEvent(new CustomEvent(name, {
+          composed: true,
+          bubbles: true,
+          detail: detail
+        }))
+      }
+    }
+    customElements.define(AppSearch.is, AppSearch);
+  </script>
+</dom-module>

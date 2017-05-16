@@ -1,0 +1,110 @@
+
+
+<dom-module id="app-mirror">
+  <script>
+    class AppMirror extends Polymer.GestureEventListeners(Polymer.Element) {
+      static get is() { return 'app-mirror'; }
+      static get properties() {
+        return {
+          key: {
+            type: String,
+            value: "storedData"
+          },
+          _dbName: {
+            type: String,
+            value: "app-mirror"
+          },
+          _storeName: {
+            type: String,
+            value: "app-mirror"
+          },
+          data: {
+            type: Object,
+            observer: "_write"
+          },
+          storedData: {
+            type: Object,
+            notify: true
+          },
+          log: {
+            type: Boolean,
+            value: false
+          },
+          _db: Object
+        }
+      }
+
+      constructor() {
+        super();
+        if (window.indexedDB) {
+          this._connectDB();
+        } else {
+          console.warn("Your browser doesn't support a stable version of IndexedDB.");
+        }
+      }
+
+      _connectDB() {
+        const request = indexedDB.open(this._dbName, 1);
+
+        request.onupgradeneeded = function(event) {
+          let db = event.target.result;
+          let objectStore = db.createObjectStore(this._storeName);
+          this.logInfo("'"+this._storeName+"' objectStore is created.");
+        }.bind(this);
+
+        request.onsuccess = function(event) {
+          this._db = request.result;
+          this.logInfo("'"+this._dbName+"' indexedDB is connected.");
+          this._read(this.key);
+        }.bind(this);
+
+        request.onerror = (err) => this.logErr(err);
+      }
+
+      _write(data) {
+        if (data == undefined)
+          return;
+
+        const transaction = this._db.transaction([this._storeName], "readwrite");
+        const store = transaction.objectStore(this._storeName);
+        const request = store.put(data, this.key);
+
+        request.onsuccess = function(event) {
+          this.logInfo("data stored under '"+this.key+"' key.");
+          this._read();
+        }.bind(this);
+
+        request.onerror = (err) => this.logErr(err);
+      }
+
+      _read(key) {
+        const transaction = this._db.transaction([this._storeName], "readonly");
+        const store = transaction.objectStore(this._storeName);
+        const request = store.get(this.key);
+
+        request.onsuccess = function(event) {
+          if (request.result) {
+            this.logInfo("storedData updated with data from '"+this.key+"' key.");
+            this._updateStoredData(request.result);
+          }
+        }.bind(this);
+
+        request.onerror = (err) => this.logErr(err);
+      }
+
+      _updateStoredData(data) {
+        this.set("storedData", data);
+      }
+
+      logErr(err){
+        console.log(err);
+      }
+
+      logInfo(info) {
+        if (this.log)
+          console.log(info);
+      }
+    }
+    window.customElements.define(AppMirror.is, AppMirror);
+  </script>
+</dom-module>

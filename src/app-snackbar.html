@@ -15,20 +15,21 @@
         width: 100vw;
         align-items: center;
         justify-content: space-between;
-        padding: 14px 24px;
+        padding: 14px 24px 24px;
         background-color: #323232;
         color: white;
+        transform: translateY(10px);
 
         @apply --shadow-elevation-6dp;
         @apply --paper-font-body1;
       }
       :host([active]) {
         transform: translateY(0);
-        transition: transform cubic-bezier(0.0, 0.0, 0.2, 1) 0.3s;
+        transition: transform cubic-bezier(0.0, 0.0, 0.2, 1) 0.2s;
       }
       :host(:not([active])) {
         transform: translateY(calc(100px + 24px));
-        transition: transform cubic-bezier(0.4, 0.0, 1, 1) 0.25s;
+        transition: transform cubic-bezier(0.4, 0.0, 1, 1) 0.2s;
       }
       :host([refresh]) #body {
         animation: RefreshMobile 0.2s;
@@ -49,6 +50,8 @@
           min-width: 288px;
           max-width: 568px;
           border-radius: 2px;
+          padding: 14px 24px;
+          transform: translateY(0);
         }
         :host([refresh]) #body {
           animation: Refresh 0.2s;
@@ -67,13 +70,13 @@
       }
       @keyframes RefreshMobile {
         0% {
-          transform: translateY(0);
+          transform: translateY(10px);
         }
         50% {
-          transform: translateY(30%);
+          transform: translateY(0);
         }
         100% {
-          transform: translateY(0);
+          transform: translateY(10px);
         }
       }
     </style>
@@ -104,7 +107,7 @@
 
       show(text) {
         this.removeAttribute("refresh");
-        if (this.active && this.text !== text)
+        if (this.active)
           setTimeout( () => this.setAttribute("refresh", ""), 0 );
 
         this.active = true;

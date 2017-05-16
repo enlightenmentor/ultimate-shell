@@ -13,11 +13,12 @@
         flex-direction: row;
         align-items: center;
         user-select: none;
-        padding: 0 8px 0;
+        padding: 0 16px 0 8px;
         @apply --shadow-elevation-4dp;
       }
       #titleStyle {
-        margin-left: 8px;
+        flex-shrink: 0;
+        padding-left: 8px;
         color: white;
         text-transform: capitalize;
         @apply --paper-font-title;
@@ -27,12 +28,26 @@
         padding: 0 16px 0;
       }
       :host([persistent]) #titleStyle {
-        margin-left: 16px;
+        box-sizing: border-box;
+        max-width: 200px;
+        padding-left: 16px;
+      }
+      :host([persistent]) slot[name=search]::slotted(*) {
+        left: 256px;
+        right: 72px;
+      }
+       slot[name=search]::slotted(*) {
+        position: absolute;
+        left: 16px;
+        right: 72px;
       }
     </style>
 
     <slot name="menu"></slot>
     <span id="titleStyle">[[title]]</span>
+    <slot name="search"></slot>
+    <div style="flex: 1"></div>
+    <slot></slot>
 
   </template>
 
