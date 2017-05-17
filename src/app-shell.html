@@ -1,7 +1,9 @@
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+
 <link rel="import" href="../bower_components/iron-media-query/iron-media-query.html">
 <link rel="import" href="../bower_components/iron-icon/iron-icon.html">
-<link rel="import" href="../bower_components/iron-icons/iron-icons.html" async>
-<link rel="import" href="../bower_components/iron-icons/social-icons.html" async>
+<link rel="import" href="../bower_components/iron-icons/iron-icons.html">
+<link rel="import" href="../bower_components/iron-icons/social-icons.html">
 <link rel="import" href="../bower_components/iron-selector/iron-selector.html">
 <link rel="import" href="../bower_components/paper-ripple/paper-ripple.html" async>
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
@@ -16,13 +18,15 @@
 <link rel="import" href="app-drawer.html">
 <link rel="import" href="app-content.html">
 <link rel="import" href="app-snackbar.html" async>
+<link rel="import" href="pages/page-home.html">
 
-<link rel="import" href="css/app-theme.html">
-<link rel="import" href="css/css-reset.html">
+<link rel="import" href="css/app-theme.html" async>
+<link rel="import" href="css/css-reset.html" async>
+<link rel="import" href="css/paper-typography.html" async>
 
 <dom-module id="app-shell">
   <template>
-    <style include="app-theme css-reset">
+    <style include="app-theme css-reset paper-typography">
       :host {
         display: block;
       }
@@ -81,12 +85,12 @@
         @apply --paper-font-body1;
       }
       #drawerMenu a:hover {
-        background-color: var(--paper-grey-50);
+        background-color: #fafafa;
       }
       #drawerMenu a.iron-selected {
         color: var(--dark-primary-color);
         font-weight: 600;
-        background-color: var(--paper-grey-100);
+        background-color: #f5f5f5;
       }
       #drawerMenu a.iron-selected paper-ripple {
         opacity: 0;
@@ -99,13 +103,7 @@
         display: flex;
         margin: 12px 0;
         flex: 1;
-        border-bottom: 1px solid var(--paper-grey-300);
-      }
-      app-content div {
-        box-sizing: border-box;
-        padding: 12px 18px;
-        background-color: var(--paper-red-50);
-        height: 200vh;
+        border-bottom: 1px solid #e0e0e0;
       }
     </style>
 

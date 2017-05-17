@@ -1,21 +1,18 @@
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
 <link rel="import" href="../bower_components/iron-selector/iron-selector.html">
-<link rel="import" href="../bower_components/paper-styles/shadow.html">
-<link rel="import" href="../bower_components/paper-styles/color.html">
-<link rel="import" href="../bower_components/paper-styles/typography.html">
-
-<link rel="import" href="css/css-reset.html">
+<link rel="import" href="css/paper-shadows.html">
+<link rel="import" href="css/paper-typography.html">
 
 <dom-module id="app-search">
   <template>
-    <style include="css-reset">
+    <style include="css-reset paper-shadows paper-typography">
       :host {
         display: flex;
         box-sizing: border-box;
-        height: 64px;
+        height: 80%;
+        max-height: 64px;
         flex-direction: row;
         flex: 1;
-        padding: 8px 0;
         pointer-events: auto;
       }
       :host(:not([closed])) {
@@ -96,7 +93,7 @@
         border-radius: 0 0 2px 2px;
         position: absolute;
         top: 100%;
-        border-top: 1px solid var(--paper-grey-300);
+        border-top: 1px solid #e0e0e0;
         background-color: white;
         overflow-y: auto;
         @apply --shadow-elevation-8dp;
@@ -115,7 +112,7 @@
         font-weight: 400;
       }
       .suggestion:hover, .suggestion.iron-selected {
-        background-color: var(--paper-grey-100);
+        background-color: #f5f5f5;
       }
       .suggestion:first-of-type {
         margin-top: 8px;
@@ -218,10 +215,10 @@
       _blur(e) {
         if (e)
           e.stopPropagation();
-        this.focused = false;
-        this.value = "";
         this.$.selector.select(0);
         this.$.input.blur();
+        this.value = "";
+        this.focused = false;
       }
 
       _handleKeyPress(e) {

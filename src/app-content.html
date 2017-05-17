@@ -1,6 +1,12 @@
 <link rel="import" href="../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../bower_components/lazy-imports/lazy-imports-mixin.html">
 
 <dom-module id="app-content">
+  <link rel="lazy-import" href="pages/page-404.html" group="page404">
+  <link rel="lazy-import" href="pages/page-one.html" group="one">
+  <link rel="lazy-import" href="pages/page-two.html" group="two">
+  <link rel="lazy-import" href="pages/page-settings.html" group="settings">
+
   <template>
     <style>
       :host {
@@ -104,7 +110,7 @@
   </template>
 
   <script>
-    class AppContent extends Polymer.Element {
+    class AppContent extends Polymer.LazyImportsMixin(Polymer.Element) {
       static get is() {
         return "app-content";
       }
@@ -134,28 +140,19 @@
 
       _newPage(page) {
         if (!this.querySelector("[page='"+page+"']"))
-          page = "404";
+          page = "page404";
         
         document.title = this._makeTitle(page);
-        this._loadPage(page);
-      }
 
-      _loadPage(page) {
         this.loading = true;
-        let tagName = this.querySelector("[page='"+page+"']").localName;
-        let src = "src/pages/" + tagName + ".html";
-        Polymer.importHref(src,
-          function onLoad(e) {
+        this.importLazyGroup(page)
+          .then((results) => {
             this.loading = false;
-            this.fire("page-loaded", {
-              name: tagName,
-              src: src,
-              document: e.path[0].import.querySelector("dom-module")
-            });
-          }.bind(this),
-          function onError(err) {
+            this.fire("lazy-loaded", results);
+          })
+          .catch((err) => {
             throw new Error(err);
-          }.bind(this), true);
+          });
       }
 
       _makeTitle(page) {

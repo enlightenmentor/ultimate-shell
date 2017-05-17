@@ -1,9 +1,9 @@
-<link rel="import" href="../bower_components/paper-styles/shadow.html">
-<link rel="import" href="../bower_components/paper-styles/typography.html">
+<link rel="import" href="css/paper-shadows.html">
+<link rel="import" href="css/paper-typography.html">
 
 <dom-module id="app-snackbar">
   <template>
-    <style>
+    <style include="paper-shadows paper-typography">
       :host {
         display: block;
         position: absolute;
@@ -36,7 +36,7 @@
       }
       #button {
         margin-left: 24px;
-        color: var(--paper-yellow-a200);
+        color: #ffff00;
         text-transform: uppercase;
         cursor: pointer;
       }

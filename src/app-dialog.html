@@ -1,13 +1,12 @@
 <link rel="import" href="../bower_components/paper-input/paper-input.html" async>
 <link rel="import" href="../bower_components/paper-button/paper-button.html" async>
-<link rel="import" href="../bower_components/paper-styles/shadow.html">
-<link rel="import" href="../bower_components/paper-styles/typography.html">
 
-<link rel="import" href="css/app-theme.html">
+<link rel="import" href="css/paper-shadows.html">
+<link rel="import" href="css/paper-typography.html">
 
 <dom-module id="app-dialog">
   <template>
-    <style>
+    <style include="paper-shadows paper-typography">
       :host {
         display: block;
         width: 100vw;
@@ -73,11 +72,6 @@
         flex-shrink: 0;
         justify-content: flex-end;
         padding: 8px 8px 8px 24px;
-      }
-      [actions] ::slotted(paper-button) {
-        font-size: 14px;
-        font-weight: 500;
-        color: var(--dark-secondary-color);
       }
       @keyframes Appear {
         from {

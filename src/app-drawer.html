@@ -1,8 +1,8 @@
-<link rel="import" href="../bower_components/paper-styles/shadow.html">
+<link rel="import" href="css/paper-shadows.html">
 
 <dom-module id="app-drawer">
   <template>
-    <style>
+    <style include="paper-shadows">
       :host {
         position: fixed;
         top: 0px;
@@ -64,7 +64,7 @@
       :host([persistent]) > #drawerContent {
         width: 100%;
         padding-top: 64px;
-        border-right: 1px solid var(--paper-grey-300);
+        border-right: 1px solid #e0e0e0;
 
         @apply --shadow-none;
       }
