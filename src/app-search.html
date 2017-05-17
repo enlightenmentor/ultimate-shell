@@ -105,13 +105,14 @@
         display: flex;
         box-sizing: border-box;
         position: relative;
+        z-index: 1;
         align-items: center;
         padding: 8px 16px;
         font-family: 'Roboto';
         font-size: 16px;
         font-weight: 400;
       }
-      .suggestion:hover, .suggestion.iron-selected {
+      .suggestion.iron-selected {
         background-color: #f5f5f5;
       }
       .suggestion:first-of-type {
@@ -133,15 +134,15 @@
       }
     </style>
 
-    <div id="search">
+    <div id="search" on-mouseleave="_unselect">
       <div id="inputBox">
-        <paper-icon-button icon="search"></paper-icon-button>
-        <input id="input" placeholder="Search" on-focus="_focus" value="{{value::input}}">
+        <paper-icon-button icon="search" on-tap="_focus"></paper-icon-button>
+        <input id="input" placeholder="Search" on-focus="_focus" on-blur="_blur" value="{{value::input}}">
       </div>
       <div id="suggestions" hidden$="[[!value]]">
-        <iron-selector id="selector" selectable=".suggestion" selected="0">
+        <iron-selector id="selector" selectable=".suggestion">
           <template is="dom-repeat" items="[[suggestions]]">
-            <a href="/[[item]]" class="suggestion" on-tap="_blur">[[item]]</a>
+            <a href="/[[item]]" data-index$="[[index]]" class="suggestion" on-tap="_select" on-mouseenter="_select" on-mouseleave="_unselect">[[item]]</a>
           </template>
         </iron-selector>
       </div>
@@ -157,7 +158,7 @@
 
       static get properties() {
         return {
-          closed: {
+          persistent: {
             value: true,
             reflectToAttribute: true
           },
@@ -191,7 +192,6 @@
 
       constructor() {
         super();
-        Polymer.Gestures.addListener(window, "tap", (e) => this._handleTap(e) );
         window.addEventListener("keydown", (e) => this._handleKeyPress(e) );
       }
 
@@ -199,26 +199,26 @@
         this.fire("search-request", str);
       }
 
-      _handleTap(e) {
-        if (e.path.find( (i) => i.localName === "app-search" ))
-          this._focus();
-        else 
-          this._blur();
-      }
-
       _focus(e) {
-        if (e)
-          e.stopPropagation();
         this.focused = true;
+        this.$.input.focus();
       }
 
       _blur(e) {
-        if (e)
-          e.stopPropagation();
-        this.$.selector.select(0);
-        this.$.input.blur();
-        this.value = "";
+        if (this.$.selector.selected !== undefined)
+          this.$.selector.selectedItem.click();
         this.focused = false;
+        this.value = "";
+        this.$.selector.select(undefined);
+        this.$.input.blur();
+      }
+
+      _select(e) {
+        this.$.selector.select(e.target.dataset.index);
+      }
+
+      _unselect(e) {
+        this.$.selector.select(undefined);
       }
 
       _handleKeyPress(e) {
@@ -226,20 +226,32 @@
           return;
         switch (e.key) {
           case "Escape":
+            this.$.selector.select(undefined);
             this._blur();
             break;
           case "Enter":
             this.$.selector.selectedItem.click();
+            this._blur();
             break;
           case "ArrowUp":
             e.preventDefault();
-            this.$.selector.selectPrevious();
-            this.$.selector.selectedItem.scrollIntoViewIfNeeded();
+            if (this.$.selector.selected === undefined) {
+              this.$.selector.select("0");
+            }
+            else {
+              this.$.selector.selectPrevious();
+              this.$.selector.selectedItem.scrollIntoViewIfNeeded();
+            }
             break;
           case "ArrowDown":
             e.preventDefault();
-            this.$.selector.selectNext();
-            this.$.selector.selectedItem.scrollIntoViewIfNeeded();
+            if (this.$.selector.selected === undefined) {
+              this.$.selector.select("0");
+            }
+            else {
+              this.$.selector.selectNext();
+              this.$.selector.selectedItem.scrollIntoViewIfNeeded();
+            }
             break;
         }
       }

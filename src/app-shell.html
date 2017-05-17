@@ -116,7 +116,7 @@
 
     <app-toolbar persistent="[[queryMin600]]" title="[[page]]">
       <paper-icon-button slot="menu" icon="menu" on-tap="_toggleDrawer"></paper-icon-button>
-      <app-search slot="search" closed="[[!queryMin600]]"></app-search>
+      <app-search slot="search" persistent="[[queryMin600]]" closed$="[[!queryMin600]]"></app-search>
       <paper-icon-button id="anonymPhoto" icon="social:person" hidden$="[[user]]" on-tap="_signIn"></paper-icon-button>
       <div id="userPhoto" style="background-image: url([[user.photo]])" hidden$="[[!user]]" on-tap="_signOut"></div>
     </app-toolbar>
