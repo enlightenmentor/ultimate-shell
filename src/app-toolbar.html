@@ -32,12 +32,13 @@
         max-width: 200px;
         padding-left: 16px;
       }
-      :host([persistent]) slot[name=search]::slotted(*) {
+      :host([persistent]) ::slotted([slot=search]) {
         left: 256px;
         right: 72px;
       }
-       slot[name=search]::slotted(*) {
+      ::slotted([slot=search]) {
         position: absolute;
+        top: 10%;
         left: 16px;
         right: 72px;
       }

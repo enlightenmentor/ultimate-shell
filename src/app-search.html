@@ -144,9 +144,9 @@
           <template is="dom-repeat" items="[[suggestions]]">
             <a href="/[[item]]" data-index$="[[index]]" class="suggestion" on-tap="_select" on-mouseenter="_select" on-mouseleave="_unselect">[[item]]</a>
           </template>
-        </iron-selector>
-      </div>
-    </div>
+  </iron-selector>
+  </div>
+  </div>
 
   </template>
 
@@ -179,7 +179,7 @@
               "result1",
               "result2",
               "result3",
-              "result4",
+              "settings",
               "result5",
               "result6",
               "result7",
@@ -192,7 +192,7 @@
 
       constructor() {
         super();
-        window.addEventListener("keydown", (e) => this._handleKeyPress(e) );
+        window.addEventListener("keydown", (e) => this._handleKeyPress(e));
       }
 
       _searchRequest(str) {
@@ -224,35 +224,28 @@
       _handleKeyPress(e) {
         if (!this.focused)
           return;
-        switch (e.key) {
-          case "Escape":
-            this.$.selector.select(undefined);
-            this._blur();
-            break;
-          case "Enter":
-            this.$.selector.selectedItem.click();
-            this._blur();
-            break;
-          case "ArrowUp":
-            e.preventDefault();
-            if (this.$.selector.selected === undefined) {
-              this.$.selector.select("0");
-            }
-            else {
-              this.$.selector.selectPrevious();
-              this.$.selector.selectedItem.scrollIntoViewIfNeeded();
-            }
-            break;
-          case "ArrowDown":
-            e.preventDefault();
-            if (this.$.selector.selected === undefined) {
-              this.$.selector.select("0");
-            }
-            else {
-              this.$.selector.selectNext();
-              this.$.selector.selectedItem.scrollIntoViewIfNeeded();
-            }
-            break;
+        if (e.key === "Escape") {
+          this.$.selector.select(undefined);
+          this._blur();
+        } else if (e.key === "Enter") {
+          this.$.selector.selectedItem.click();
+          this._blur();
+        } else if (e.key === "ArrowUp" || e.key === "Up") {
+          e.preventDefault();
+          if (this.$.selector.selected === undefined) {
+            this.$.selector.select("0");
+          } else {
+            this.$.selector.selectPrevious();
+            this.$.selector.selectedItem.scrollIntoViewIfNeeded();
+          }
+        } else if (e.key === "ArrowDown" || e.key === "Down") {
+          e.preventDefault();
+          if (this.$.selector.selected === undefined) {
+            this.$.selector.select("0");
+          } else {
+            this.$.selector.selectNext();
+            this.$.selector.selectedItem.scrollIntoViewIfNeeded();
+          }
         }
       }
 
