@@ -31,7 +31,7 @@
         transform: translateY(calc(100px + 24px));
         transition: transform cubic-bezier(0.4, 0.0, 1, 1) 0.2s;
       }
-      :host([refresh]) #body {
+      #body[refresh] {
         animation: RefreshMobile 0.2s;
       }
       #button {
@@ -53,7 +53,7 @@
           padding: 14px 24px;
           transform: translateY(0);
         }
-        :host([refresh]) #body {
+        #body[refresh] {
           animation: Refresh 0.2s;
         }
       }
@@ -106,9 +106,8 @@
       }
 
       show(text) {
-        this.removeAttribute("refresh");
         if (this.active)
-          setTimeout( () => this.setAttribute("refresh", ""), 0 );
+          this.animateWithAttr(this.$.body, "refresh");
 
         this.active = true;
         this.text = text;
@@ -124,6 +123,15 @@
 
       _action() {
         this._hide();
+      }
+
+      animateWithAttr(node, attr) {
+        onanimationend = (e) => {
+          node.removeAttribute(attr);
+          node.removeEventListener("animationend", onanimationend);
+        };
+        node.addEventListener("animationend", onanimationend);
+        node.setAttribute(attr, "");
       }
     }
     customElements.define(AppSnackbar.is, AppSnackbar);

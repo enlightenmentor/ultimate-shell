@@ -1,0 +1,74 @@
+<link rel="import" href="app-snackbar.html" async>
+
+<script src="js/tools.js"></script>
+
+<dom-module id="app-state">
+  <template>
+
+    <slot></slot>
+    <app-snackbar id="snackbar"></app-snackbar>
+
+  </template>
+  <script>
+    class AppState extends Polymer.Element {
+      static get is() {
+        return "app-state";
+      }
+
+      static get properties() {
+        return {
+          state: {
+            type: Object,
+            notify: true
+          }
+        }
+      }
+
+      constructor() {
+        super();
+        
+        this.set("state", {});
+
+        window.addEventListener("online", (e) => this._showSnackbar("The device is online"));
+        window.addEventListener("offline", (e) => this._showSnackbar("The device is offline"));
+        this.addEventListener("route-changed", (e) => this._handleRoute(e.detail));
+        this.addEventListener("show-snackbar", (e) => this._showSnackbar(e.detail));
+        this.addEventListener("user-changed", (e) => this._handleUser(e.detail));
+        this.addEventListener("dialog-submitted", (e) => console.log("Dialog result", e.detail));
+      }
+
+      _handleRoute(route) {
+        if (["home","one","two","settings"].indexOf(route.segments[0]) === -1)
+          this.set("state", Tools.setIn(this.state, ["page"], "page404"));
+        else 
+          this.set("state", Tools.setIn(this.state, ["page"], route.segments[0]));
+
+        this._makeTitle(this.state.page);
+      }
+
+      _makeTitle(page) {
+        document.title = page[0].toUpperCase() + page.substr(1) + " - Ultimate Shell";
+      }
+
+      _handleUser(user) {
+        if (user) {
+          user = {
+            name: user.displayName,
+            email: user.email,
+            photo: user.photoURL,
+            uid: user.uid
+          };
+
+          this._showSnackbar(`${user.name} is signed in!`);
+        }
+        
+        this.set("state", Tools.setIn(this.state, ["user"], user));
+      }
+
+      _showSnackbar(text) {
+        this.$.snackbar.show(text);
+      }
+    }
+    customElements.define(AppState.is, AppState);
+  </script>
+</dom-module>

@@ -39,7 +39,7 @@
       ::slotted([slot=search]) {
         position: absolute;
         top: 10%;
-        left: 16px;
+        left: 8px;
         right: 72px;
       }
     </style>
@@ -53,7 +53,7 @@
   </template>
 
   <script>
-    class AppToolbar extends Polymer.Element {
+    class AppToolbar extends Polymer.GestureEventListeners(Polymer.Element) {
       static get is() {
         return "app-toolbar";
       }

@@ -43,10 +43,10 @@
       <span slot="title">Test Dialog</span>
 
       <p slot="content">This is test dialog from the setting page. Try to type smth below and press 'Submit'</p>
-      <paper-input slot="content" label="Type here" value="{{dialogData.input::input}}"></paper-input>
+      <paper-input slot="content" label="Type here" value="{{dialogData.input::input}}" autofocus></paper-input>
 
-      <paper-button slot="actions" on-tap="_closeDialog">Close</paper-button>
-      <paper-button slot="actions" on-tap="_submitDialog">Submit</paper-button>
+      <paper-button id="close" slot="actions" on-tap="_closeDialog">Close</paper-button>
+      <paper-button id="submit" slot="actions" on-tap="_submitDialog">Submit</paper-button>
     </app-dialog>
 
   </template>

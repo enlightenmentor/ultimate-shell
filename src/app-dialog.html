@@ -117,6 +117,11 @@
         }
       }
 
+      constructor() {
+        super();
+        window.addEventListener("keydown", (e) => this._handleKeyPress(e));
+      }
+
       open(content) {
         this.active = true;
       }
@@ -125,9 +130,14 @@
         this.active = false;
       }
 
-      _fixPosition() {
-        const rect = this.getBoundingClientRect();
-        this.style.transform = "translate(-"+rect.top+"px, -"+rect.left+"px)"
+      _handleKeyPress(e) {
+        if (!this.active)
+          return;
+        if (e.key === "Escape") {
+          this.close();
+        } else if (e.key === "Enter") {
+          this.querySelector('#submit').click();
+        }
       }
 
       fire(name, detail) {

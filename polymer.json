@@ -20,5 +20,14 @@
     "firebase.json",
     "database.rules.json",
     "bower_components/webcomponentsjs/webcomponents-loader.js"
-  ]
+  ],
+  "builds": [{
+    "name": "toms-build",
+    "insertPrefetchLinks": true,
+    "addServiceWorker": true,
+    "addPushManifest": true,
+    "js": {"minify": true},
+    "css": {"minify": true},
+    "html": {"minify": true}
+  }]
 }

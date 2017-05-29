@@ -138,25 +138,16 @@
         this.squeezed = !this.squeezed;
       }
 
-      _newPage(page) {
-        if (!this.querySelector("[page='"+page+"']"))
-          page = "page404";
-        
-        document.title = this._makeTitle(page);
-
+      async _newPage(page) {
         this.loading = true;
-        this.importLazyGroup(page)
-          .then((results) => {
-            this.loading = false;
-            this.fire("lazy-loaded", results);
-          })
-          .catch((err) => {
-            throw new Error(err);
-          });
-      }
-
-      _makeTitle(page) {
-        return page[0].toUpperCase() + page.substr(1) + " - Ultimate Shell";
+        
+        try {
+          let results = await this.importLazyGroup(page)
+          this.loading = false;
+          this.fire("lazy-loaded", results);
+        } catch(err) {
+          throw new Error(err);
+        }
       }
 
       fire(name, detail) {
