@@ -1,0 +1,89 @@
+<script src="../bower_components/idb-promised/lib/idb.js"></script>
+
+<dom-module id="idb-data">
+  <script>
+    class IDBData extends Polymer.Element {
+
+      static get is() {
+        return "idb-data";
+      }
+
+      static get properties() {
+        return {
+          key: String,
+          _dbKey: {
+            type: String,
+            computed: "_makeDBKey(key)"
+          },
+          _storeKey: {
+            type: String,
+            computed: "_makeStoreKey(key)"
+          },
+          data: Object,
+          storedData: Object,
+          dbPromise: Object
+        }
+      }
+
+      static get observers() {
+        return [
+          "_storeData(data, key, dbPromise)"
+        ]
+      }
+
+      ready() {
+        super.ready();
+
+        this.dbPromise = idb.open(this._dbKey, 1, upgradeDB => {
+          upgradeDB.createObjectStore(this._storeKey);
+        });
+        this.getStoredData(this.key);
+      }
+
+      getStoredData(key) {
+        this.dbPromise.then(db => {
+          const transaction = db.transaction(this._storeKey);
+          return transaction.objectStore(this._storeKey).get(key);
+        }).then(value => {
+          if (!value)
+            value = null;
+          this.set("storedData", value);
+          this.fire("new-idbdata", this.storedData);
+        });
+      }
+
+      _storeData(data, key, dbPromise) {
+        if (data && key && dbPromise && this.storedData !== undefined) {
+          const changes = Tools.filterDeep(data, this.storedData);
+          if (changes) {
+            this.dbPromise.then(db => {
+              const transaction = db.transaction(this._storeKey, 'readwrite');
+              transaction.objectStore(this._storeKey).put(data, key);
+              return transaction.complete;
+            }).then(() => {
+              this.set("storedData", data); // Mutable DANGER!!! should be immutable
+              this.fire("new-idbdata", this.storedData);
+            });
+          }
+        }
+      }
+
+      _makeDBKey(key) {
+        return `${this.key}-db`;
+      }
+
+      _makeStoreKey(key) {
+        return `${this.key}-store`;
+      }
+
+      fire(name, detail) {
+        this.dispatchEvent(new CustomEvent(name, {
+          composed: true,
+          bubbles: true,
+          detail: detail
+        }));
+      }
+    }
+    customElements.define(IDBData.is, IDBData);
+  </script>
+</dom-module>

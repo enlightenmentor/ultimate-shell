@@ -1,53 +1,70 @@
-<link rel="import" href="../../bower_components/paper-button/paper-button.html">
-<link rel="import" href="../../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../../bower_components/paper-checkbox/paper-checkbox.html">
+<link rel="import" href="../../bower_components/paper-dropdown-menu/paper-dropdown-menu.html">
+<link rel="import" href="../../bower_components/paper-listbox/paper-listbox.html">
+<link rel="import" href="../../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../../bower_components/paper-radio-group/paper-radio-group.html">
+<link rel="import" href="../../bower_components/paper-radio-button/paper-radio-button.html">
+<link rel="import" href="../../bower_components/paper-slider/paper-slider.html">
+<link rel="import" href="../../bower_components/paper-toggle-button/paper-toggle-button.html">
 
 <link rel="import" href="../css/default-theme.html">
-
-<link rel="import" href="../app-dialog.html" async>
 
 <dom-module id="page-settings">
   <template>
     <style include="css-reset">
       :host {
         display: flex;
+        align-items: flex-start;
+        justify-content: flex-start;
+        flex-direction: column;
         width: 100%;
         height: 100%;
         box-sizing: border-box;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 12px 16px;
+        padding: 18px 24px;
         background-color: var(--light-secondary-color);
       }
-      paper-button {
-        margin: 8px;
-        background-color: var(--dark-secondary-color);
-        color: white;
-        text-align: center;
+      :host > * {
+        margin-bottom: 12px;
       }
-      #dialog paper-input {
-        margin-top: -8px;
+      paper-dropdown-menu {
+        max-width: 200px;
       }
-      #dialog paper-button {
-        font-size: 14px;
-        font-weight: 500;
-        background-color: var(--dark-secondary-color);
-        color: white;
+      paper-radio-group {
+        --paper-radio-group-item-padding: 12px 12px 12px 0;
       }
-    </style>  
+      paper-slider {
+        --paper-slider-knob-color: var(--primary-color);
+        --paper-slider-active-color: var(--primary-color);
+        --paper-slider-pin-color: var(--primary-color);
+        cursor: pointer;
+      }
+      paper-toggle-button {
+        cursor: pointer;
+      }
+    </style>
 
-    <paper-button id="dialogButton" on-tap="_openDialog" raised>Open Dialog</paper-button>
-    <paper-button id="snackbarButton" on-tap="_showSnackbar" raised>Show Snackbar</paper-button>
+    <paper-checkbox checked="[[settings.checkbox]]" on-change="_checkboxChange">Checkbox</paper-checkbox>
+
+    <paper-radio-group selected="[[settings.radio]]" on-selected-changed="_radioChange">
+      <paper-radio-button name="first">First</paper-radio-button>
+      <paper-radio-button name="second">Second</paper-radio-button>
+      <paper-radio-button name="third">Third</paper-radio-button>
+    </paper-radio-group>
+
+    Slider
+    <paper-slider pin value="[[settings.slider]]" on-change="_sliderChange"></paper-slider>
+
+    Toggler
+    <paper-toggle-button checked="[[settings.toggler]]" on-change="_togglerChange"></paper-toggle-button>
     
-    <app-dialog id="dialog">
-      <span slot="title">Test Dialog</span>
-
-      <p slot="content">This is test dialog from the setting page. Try to type smth below and press 'Submit'</p>
-      <paper-input slot="content" label="Type here" value="{{dialogData.input::input}}" autofocus></paper-input>
-
-      <paper-button id="close" slot="actions" on-tap="_closeDialog">Close</paper-button>
-      <paper-button id="submit" slot="actions" on-tap="_submitDialog">Submit</paper-button>
-    </app-dialog>
+    <paper-dropdown-menu label="Dropdown">
+      <paper-listbox slot="dropdown-content" class="dropdown-content"
+                     selected="[[settings.dropdown]]" on-selected-changed="_dropdownChange">
+        <paper-item>Item One</paper-item>
+        <paper-item>Item Two</paper-item>
+        <paper-item>Item Three</paper-item>
+      </paper-listbox>
+    </paper-dropdown-menu>
 
   </template>
 
@@ -59,34 +76,28 @@
 
       static get properties() {
         return {
-          fullwidth: {
-            type: Boolean,
-            reflectToAttribute: true
-          },
-          dialogData: {
-            type: Object,
-            value: function() {
-              return {};
-            }
-          }
+          settings: Object
         }
       }
 
-      _showSnackbar() {
-        this.fire("show-snackbar", "This is snackbar");
+      _checkboxChange(e) {
+        this.fire("settings-changed", {key: "checkbox", value: e.target.checked});
       }
 
-      _openDialog() {
-        this.$.dialog.open();
+      _radioChange(e) {
+        this.fire("settings-changed", {key: "radio", value: e.target.selected});
       }
 
-      _closeDialog() {
-        this.$.dialog.close();
+      _sliderChange(e) {
+        this.fire("settings-changed", {key: "slider", value: e.target.value});
       }
 
-      _submitDialog() {
-        this.fire("dialog-submitted", this.dialogData);
-        this.$.dialog.close();
+      _togglerChange(e) {
+        this.fire("settings-changed", {key: "toggler", value: e.target.checked});
+      }
+
+      _dropdownChange(e) {
+        this.fire("settings-changed", {key: "dropdown", value: e.target.selected});
       }
 
       fire(name, detail) {

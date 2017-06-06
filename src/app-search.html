@@ -25,6 +25,11 @@
         box-sizing: border-box;
         width: 100%;
         position: relative;
+        @apply --shadow-none;
+        @apply --shadow-transition;
+      }
+      :host([focused]) {
+        @apply --shadow-elevation-2dp;
       }
       :host([closed]:not([focused])) {
         pointer-events: none;
@@ -50,7 +55,7 @@
         z-index: 2;
       }
       :host([closed]) #inputBox {
-        transition: background-color 0.3s;
+        transition: background-color 0.2s;
       }
       paper-icon-button {
         margin: 0 8px;
@@ -104,7 +109,7 @@
         border-top: 1px solid #e0e0e0;
         background-color: white;
         overflow-y: auto;
-        @apply --shadow-elevation-8dp;
+        @apply --shadow-elevation-6dp;
       }
       :host(:not([focused])) #suggestions {
         display: none;
@@ -212,7 +217,6 @@
       }
 
       _focus(e) {
-        console.log("focus");
         if (this.closed) // tap event fix
           e.preventDefault();
         this.focused = true;
@@ -220,7 +224,6 @@
       }
 
       _blur(e) {
-        console.log("blur");
         if (this.$.selector.selected !== undefined)
           this.$.selector.selectedItem.click();
         this.focused = false;

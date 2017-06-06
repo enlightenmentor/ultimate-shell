@@ -5,14 +5,15 @@
 <link rel="import" href="../bower_components/iron-icons/iron-icons.html">
 <link rel="import" href="../bower_components/iron-icons/social-icons.html">
 <link rel="import" href="../bower_components/iron-selector/iron-selector.html">
-<link rel="import" href="../bower_components/paper-ripple/paper-ripple.html" async>
+<link rel="import" href="../bower_components/paper-item/paper-icon-item.html">
 <link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
 
 <script src="https://www.gstatic.com/firebasejs/4.0.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/4.0.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/4.0.0/firebase-database.js"></script>
 
 <link rel="import" href="app-state.html">
-<link rel="import" href="firebase-auth.html">
+<link rel="import" href="fire-auth.html">
 <link rel="import" href="app-router.html">
 <link rel="import" href="app-toolbar.html">
 <link rel="import" href="app-search.html">
@@ -77,28 +78,14 @@
         flex-direction: column;
         padding: 12px 0;
       }
-      #drawerMenu a {
-        display: flex;
-        box-sizing: border-box;
-        position: relative;
-        align-items: center;
-        padding: 14px 0 14px 16px;
-        @apply --paper-font-body1;
-      }
       #drawerMenu a:hover {
         background-color: #fafafa;
       }
       #drawerMenu a.iron-selected {
         color: var(--dark-primary-color);
+      }
+      #drawerMenu a.iron-selected paper-icon-item {
         font-weight: 600;
-        background-color: #f5f5f5;
-      }
-      #drawerMenu a.iron-selected paper-ripple {
-        opacity: 0;
-        transition: opacity 0s 0.3s;
-      }
-      #drawerMenu a iron-icon {
-        margin-right: 16px;
       }
       #drawerMenu div#separator {
         display: flex;
@@ -110,9 +97,10 @@
     </style>
 
     <app-state state="{{state}}">
-      <firebase-auth id="auth"></firebase-auth>
 
       <app-router default-url="/home"></app-router>
+
+      <fire-auth id="auth"></fire-auth>
 
       <iron-media-query query="(min-width: 600px)" query-matches="{{queryMin600}}"></iron-media-query>
       <iron-media-query query="(max-width: 900px)" query-matches="{{queryMax900}}"></iron-media-query>
@@ -131,25 +119,29 @@
         <div id="drawerMenu">
           <iron-selector selected="[[state.page]]" attr-for-selected="page">
             <a href="/home" page="home" on-tap="_closeMobileDrawer">
-              <paper-ripple></paper-ripple>
-              <iron-icon icon="home"></iron-icon>
-              <span>Home</span>
+              <paper-icon-item>
+                <iron-icon icon="home" slot="item-icon"></iron-icon>
+                Home
+              </paper-icon-item>
             </a>
             <a href="/one" page="one" on-tap="_closeMobileDrawer">
-              <paper-ripple></paper-ripple>
-              <iron-icon icon="content-copy"></iron-icon>
-              <span>Page One</span>
+              <paper-icon-item>
+                <iron-icon icon="content-copy" slot="item-icon"></iron-icon>
+                Page One
+              </paper-icon-item>
             </a>
             <a href="/two" page="two" on-tap="_closeMobileDrawer">
-              <paper-ripple></paper-ripple>
-              <iron-icon icon="content-copy"></iron-icon>
-              <span>Page Two</span>
+              <paper-icon-item>
+                <iron-icon icon="content-copy" slot="item-icon"></iron-icon>
+                Page Two
+              </paper-icon-item>
             </a>
             <div id="separator"></div>
             <a href="/settings" page="settings" on-tap="_closeMobileDrawer">
-              <paper-ripple></paper-ripple>
-              <iron-icon icon="settings"></iron-icon>
-              <span>Settings</span>
+              <paper-icon-item>
+                <iron-icon icon="settings" slot="item-icon"></iron-icon>
+                Settings
+              </paper-icon-item>
             </a>
           </iron-selector>
         </div>
@@ -160,8 +152,10 @@
         <page-one page="one"></page-one>
         <page-two page="two"></page-two>
         <page-404 page="404"></page-404>
-        <page-settings page="settings"></page-settings>
+        <page-settings page="settings" settings="[[state.settings]]"></page-settings>
       </app-content>
+
+      <app-snackbar id="snackbar"></app-snackbar>
 
     </app-state>
 
@@ -194,6 +188,7 @@
       connectedCallback() {
         super.connectedCallback();
         this.removeAttribute('unresolved');
+        this.addEventListener("show-snackbar", (e) => this._showSnackbar(e.detail));
       }
 
       _signIn() {
@@ -213,6 +208,10 @@
       _closeMobileDrawer() {
         if (!this.queryMin600)
           this.$.drawer.close();
+      }
+
+      _showSnackbar(text) {
+        this.$.snackbar.show(text);
       }
 
       fire(name, detail) {

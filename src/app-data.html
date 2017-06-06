@@ -1,0 +1,73 @@
+<link rel="import" href="fire-data.html">
+<link rel="import" href="idb-data.html">
+
+<dom-module id="app-data">
+  <template>
+    
+    <fire-data id="serverSettings" data="[[state.settings]]" active="[[state.online]]" path="[[_makePathForUsersSettings(state.user.uid)]]"></fire-data>
+    <idb-data id="mirrorSettings" key="settings" data="[[state.settings]]"></idb-data>
+
+  </template>
+  <script>
+    class AppData extends Polymer.Element {
+      static get is() {
+        return "app-data";
+      }
+
+      static get properties() {
+        return {
+          state: Object,
+          mergedState: {
+            type: Object,
+            value: () => ({})
+          }
+        }
+      }
+
+      ready() {
+        super.ready();
+
+        this.$.serverSettings.addEventListener("new-firedata",  (e) => this._handleServerSettings(e.detail));
+        this.$.mirrorSettings.addEventListener("new-idbdata",   (e) => this._handleMirrorSettings(e.detail));
+      }
+
+      _makePathForUsersSettings(uid) {
+        if (uid) {
+          return `users/${uid}/settings`
+        }
+        return null;
+      }
+
+      _handleServerSettings(settings) {
+        if (settings)
+          this.set("mergedState", Immutable.set(this.mergedState, "settings", settings, {deep: 'true'}));
+        this.fire("update-state", this.mergedState);
+      }
+
+      _handleMirrorSettings(settings) {
+        if (settings)
+          this.set("mergedState", Immutable.set(this.mergedState, "settings", settings, {deep: 'true'}));
+        this.fire("update-state", this.mergedState);
+      }
+
+      fire(name, detail) {
+        this.dispatchEvent(new CustomEvent(name, {
+          composed: true,
+          bubbles: true,
+          detail: detail
+        }))
+      }
+
+      // AND() {
+      //   let res = true;
+      //   for (let i = 0; i<arguments.length; i++) {
+      //     res = res && !!arguments[i];
+      //     if (!res)
+      //       return res;
+      //   }
+      //   return res;
+      // }
+    }
+    customElements.define(AppData.is, AppData);
+  </script>
+</dom-module>

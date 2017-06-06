@@ -1,0 +1,63 @@
+<dom-module id="fire-data">
+  <script>
+    class FireData extends Polymer.Element {
+
+      static get is() {
+        return "fire-data";
+      }
+
+      static get properties() {
+        return {
+          data: Object,
+          serverData: Object,
+          path: String,
+          active: Boolean,
+          _ref: {
+            type: Object,
+            computed: "_establishConnection(path, active)"
+          }
+        }
+      }
+
+      static get observers() {
+        return [
+          "_storeData(data, _ref)"
+        ]
+      }
+
+      _establishConnection(path, active) {
+        let ref;
+        if (path && active) {
+          ref = firebase.database().ref(path);
+          ref.on("value", (snapshot) => this._getServerData(snapshot));
+        } else {
+          ref = null;
+        }
+        return ref;
+      }
+
+      _getServerData(snapshot) {
+        this.set("serverData", snapshot.val());
+        this.fire("new-firedata", this.serverData);
+      }
+
+      _storeData(data, reference) {
+        if (data && this.serverData !== undefined && reference) {
+          const changes = Tools.filterDeep(data, this.serverData);
+          if (changes) {
+            reference.update(changes);
+          }
+        }
+      }
+
+      fire(name, detail) {
+        this.dispatchEvent(new CustomEvent(name, {
+          composed: true,
+          bubbles: true,
+          detail: detail
+        }));
+      }
+    }
+    customElements.define(FireData.is, FireData);
+  </script>
+</dom-module>

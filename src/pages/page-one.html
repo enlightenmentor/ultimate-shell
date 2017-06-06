@@ -1,17 +1,53 @@
+<link rel="import" href="../../bower_components/paper-button/paper-button.html">
+<link rel="import" href="../../bower_components/paper-input/paper-input.html">
+
+<link rel="import" href="../css/default-theme.html">
+
+<link rel="import" href="../app-dialog.html" async>
+
 <dom-module id="page-one">
   <template>
     <style>
       :host {
-        display: block;
+        display: flex;
         width: 100%;
         height: 100%;
         box-sizing: border-box;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
         padding: 12px 16px;
         background-color: var(--light-secondary-color);
       }
+      paper-button {
+        margin: 8px;
+        background-color: var(--dark-secondary-color);
+        color: white;
+        text-align: center;
+      }
+      #dialog paper-input {
+        margin-top: -8px;
+      }
+      #dialog paper-button {
+        font-size: 14px;
+        font-weight: 500;
+        background-color: var(--dark-secondary-color);
+        color: white;
+      }
     </style>  
 
-    Page One
+    <paper-button id="dialogButton" on-tap="_openDialog" raised>Open Dialog</paper-button>
+    <paper-button id="snackbarButton" on-tap="_showSnackbar" raised>Show Snackbar</paper-button>
+    
+    <app-dialog id="dialog">
+      <span slot="title">Test Dialog</span>
+
+      <p slot="content">This is test dialog from the setting page. Try to type smth below and press 'Submit'</p>
+      <paper-input slot="content" label="Type here" value="{{dialogData.input::input}}" autofocus></paper-input>
+
+      <paper-button id="close" slot="actions" on-tap="_closeDialog">Close</paper-button>
+      <paper-button id="submit" slot="actions" on-tap="_submitDialog">Submit</paper-button>
+    </app-dialog>
 
   </template>
 
@@ -19,6 +55,46 @@
     class PageOne extends Polymer.GestureEventListeners(Polymer.Element) {
       static get is() {
         return "page-one";
+      }
+
+      static get properties() {
+        return {
+          fullwidth: {
+            type: Boolean,
+            reflectToAttribute: true
+          },
+          dialogData: {
+            type: Object,
+            value: function() {
+              return {};
+            }
+          }
+        }
+      }
+
+      _showSnackbar() {
+        this.fire("show-snackbar", "This is snackbar");
+      }
+
+      _openDialog() {
+        this.$.dialog.open();
+      }
+
+      _closeDialog() {
+        this.$.dialog.close();
+      }
+
+      _submitDialog() {
+        this.fire("dialog-submitted", this.dialogData);
+        this.$.dialog.close();
+      }
+
+      fire(name, detail) {
+        this.dispatchEvent(new CustomEvent(name, {
+          composed: true,
+          bubbles: true,
+          detail: detail
+        }))
       }
     }
     customElements.define(PageOne.is, PageOne);

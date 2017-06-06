@@ -1,12 +1,14 @@
+<link rel="import" href="app-data.html">
 <link rel="import" href="app-snackbar.html" async>
 
 <script src="js/tools.js"></script>
 
 <dom-module id="app-state">
   <template>
+    
+    <app-data state="[[state]]"></app-data>
 
     <slot></slot>
-    <app-snackbar id="snackbar"></app-snackbar>
 
   </template>
   <script>
@@ -19,7 +21,21 @@
         return {
           state: {
             type: Object,
-            notify: true
+            notify: true,
+            value: () => ({})
+          },
+          defaultState: {
+            type: Object,
+            value: () => ({
+              settings: {
+                checkbox: false,
+                radio: "first",
+                slider: 0,
+                toggler: false,
+                dropdown: 0
+              },
+              online: true,
+            })
           }
         }
       }
@@ -27,21 +43,40 @@
       constructor() {
         super();
         
-        this.set("state", {});
+        this.set("state", Immutable.merge(this.state, this.defaultState, {deep: 'true'}));
+      }
 
-        window.addEventListener("online", (e) => this._showSnackbar("The device is online"));
-        window.addEventListener("offline", (e) => this._showSnackbar("The device is offline"));
-        this.addEventListener("route-changed", (e) => this._handleRoute(e.detail));
-        this.addEventListener("show-snackbar", (e) => this._showSnackbar(e.detail));
-        this.addEventListener("user-changed", (e) => this._handleUser(e.detail));
-        this.addEventListener("dialog-submitted", (e) => console.log("Dialog result", e.detail));
+      ready() {
+        super.ready();
+
+        window.addEventListener("online",                     (e) => this._handleOnline(e));
+        window.addEventListener("offline",                    (e) => this._handleOffline(e));
+        this.addEventListener("update-state",                 (e) => this._updateState(e.detail));
+        this.addEventListener("route-changed",                (e) => this._handleRoute(e.detail));
+        this.addEventListener("user-changed",                 (e) => this._handleUser(e.detail));
+        this.addEventListener("settings-changed",             (e) => this._handleSettings(e.detail));
+        this.addEventListener("dialog-submitted",             (e) => console.log("Dialog result", e.detail));
+      }
+
+      _updateState(newState) {
+        this.set("state", Immutable.merge(this.state, newState, {deep: 'true'}));
+      }
+
+      _handleOnline(e) {
+        this.set("state.online", true);
+        this._showSnackbar("The device is online")
+      }
+
+      _handleOffline(e) {
+        this.set("state.online", false);
+        this._showSnackbar("The device is offline")
       }
 
       _handleRoute(route) {
         if (["home","one","two","settings"].indexOf(route.segments[0]) === -1)
-          this.set("state", Tools.setIn(this.state, ["page"], "page404"));
+          this.set("state", Immutable.set(this.state, "page", "page404", {deep: 'true'}));
         else 
-          this.set("state", Tools.setIn(this.state, ["page"], route.segments[0]));
+          this.set("state", Immutable.set(this.state, "page", route.segments[0], {deep: 'true'}));
 
         this._makeTitle(this.state.page);
       }
@@ -51,22 +86,11 @@
       }
 
       _handleUser(user) {
-        if (user) {
-          user = {
-            name: user.displayName,
-            email: user.email,
-            photo: user.photoURL,
-            uid: user.uid
-          };
-
-          this._showSnackbar(`${user.name} is signed in!`);
-        }
-        
-        this.set("state", Tools.setIn(this.state, ["user"], user));
+        this.set("state", Immutable.set(this.state, "user", user, {deep: 'true'}));
       }
 
-      _showSnackbar(text) {
-        this.$.snackbar.show(text);
+      _handleSettings(change) {
+        this.set('state', Immutable.setIn(this.state, ["settings", change.key], change.value, {deep: 'true'}));
       }
     }
     customElements.define(AppState.is, AppState);

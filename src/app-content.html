@@ -138,16 +138,26 @@
         this.squeezed = !this.squeezed;
       }
 
-      async _newPage(page) {
+      /*async*/ _newPage(page) {
         this.loading = true;
         
-        try {
-          let results = await this.importLazyGroup(page)
-          this.loading = false;
-          this.fire("lazy-loaded", results);
-        } catch(err) {
-          throw new Error(err);
-        }
+        // try {
+        //   let results = await this.importLazyGroup(page)
+        //   this.loading = false;
+        //   this.fire("lazy-loaded", results);
+        // } catch(err) {
+        //   throw new Error(err);
+        // }
+
+        this.importLazyGroup(page)
+          .then( results => {
+            this.loading = false;
+            this.fire("lazy-loaded", results);
+          })
+          .catch( err => {
+            throw new Error(err);
+          })
+        
       }
 
       fire(name, detail) {

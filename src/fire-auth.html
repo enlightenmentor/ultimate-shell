@@ -1,0 +1,104 @@
+<dom-module id="fire-auth">
+  <script>
+    class FireAuth extends Polymer.Element {
+
+      static get is() {
+        return "fire-auth";
+      }
+
+      static get properties() {
+        return {
+          user: {
+            type: Object,
+            notify: true,
+          },
+          provider: Object,
+        };
+      }
+
+      connectedCallback() {
+        super.connectedCallback();
+
+        if (navigator.credentials) {
+          navigator.credentials.get({
+            password: true,
+            federated: {
+              providers: [
+                'https://accounts.google.com'
+              ]
+            },
+            unmediated: true
+          }).then(cred => {
+            if (cred) {
+              const user = {
+                name: cred.name,
+                email: cred.id,
+                photo: cred.iconURL
+              }
+              this.fire("user-changed", user);
+            } else {
+              return Promise.resolve();
+            }
+          }).then(profile => {
+            if (profile) {
+              updateUI(profile);
+            }
+          }).catch(error => {
+            showError('Sign-in Failed');
+          });;
+        }
+        firebase.auth().onAuthStateChanged(this._userChange.bind(this));
+        this.set("provider", new firebase.auth.GoogleAuthProvider());
+        this.provider.addScope('https://www.googleapis.com/auth/contacts.readonly'); // OAuth 2.0
+      }
+
+      signIn() {
+        firebase.auth().signInWithPopup(this.provider)
+          .catch(err => {
+            throw new Error(err);
+          });
+      }
+
+      signOut() {
+        firebase.auth().signOut()
+          .catch(err => {
+            throw new Error(err);
+          });
+      }
+
+      _userChange(user) {
+        if (user) {
+          user = {
+            name: user.displayName,
+            email: user.email,
+            photo: user.photoURL,
+            uid: user.uid
+          }
+          if (navigator.credentials) {
+            const cred = new FederatedCredential({
+              id: user.email,
+              name: user.name,
+              iconURL: user.photo,
+              provider: 'https://accounts.google.com'
+            });
+            navigator.credentials.store(cred);
+          }
+        } else {
+          if (navigator.credentials) {
+            navigator.credentials.requireUserMediation();
+          }
+        }
+        this.fire("user-changed", user);
+      }
+
+      fire(name, detail) {
+        this.dispatchEvent(new CustomEvent(name, {
+          composed: true,
+          bubbles: true,
+          detail: detail
+        }));
+      }
+    }
+    customElements.define(FireAuth.is, FireAuth);
+  </script>
+</dom-module>

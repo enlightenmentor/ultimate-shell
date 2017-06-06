@@ -16,6 +16,7 @@
   ],
   "extraDependencies": [
     "manifest.json",
+    "service-worker.js",
     ".firebaserc",
     "firebase.json",
     "database.rules.json",
@@ -24,10 +25,6 @@
   "builds": [{
     "name": "toms-build",
     "insertPrefetchLinks": true,
-    "addServiceWorker": true,
-    "addPushManifest": true,
-    "js": {"minify": true},
-    "css": {"minify": true},
-    "html": {"minify": true}
+    "addPushManifest": true
   }]
 }
