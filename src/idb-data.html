@@ -27,7 +27,7 @@
 
       static get observers() {
         return [
-          "_storeData(data, key, dbPromise)"
+          "_storeData(data, key, dbPromise)",
         ]
       }
 
@@ -37,13 +37,13 @@
         this.dbPromise = idb.open(this._dbKey, 1, upgradeDB => {
           upgradeDB.createObjectStore(this._storeKey);
         });
-        this.getStoredData(this.key);
+        this.getStoredData();
       }
 
-      getStoredData(key) {
+      getStoredData() {
         this.dbPromise.then(db => {
           const transaction = db.transaction(this._storeKey);
-          return transaction.objectStore(this._storeKey).get(key);
+          return transaction.objectStore(this._storeKey).get(this.key);
         }).then(value => {
           if (!value)
             value = null;

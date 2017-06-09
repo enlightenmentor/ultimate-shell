@@ -46,8 +46,8 @@
         this.set("state", Immutable.merge(this.state, this.defaultState, {deep: 'true'}));
       }
 
-      ready() {
-        super.ready();
+      connectedCallback() {
+        super.connectedCallback();
 
         window.addEventListener("online",                     (e) => this._handleOnline(e));
         window.addEventListener("offline",                    (e) => this._handleOffline(e));
@@ -82,7 +82,7 @@
       }
 
       _makeTitle(page) {
-        document.title = page[0].toUpperCase() + page.substr(1) + " - Ultimate Shell";
+        document.title = `${page[0].toUpperCase() + page.substr(1)} - Ultimate Shell`;
       }
 
       _handleUser(user) {
@@ -91,6 +91,18 @@
 
       _handleSettings(change) {
         this.set('state', Immutable.setIn(this.state, ["settings", change.key], change.value, {deep: 'true'}));
+      }
+
+      _showSnackbar(text) {
+        this.fire("show-snackbar", text);
+      }
+
+      fire(name, detail) {
+        this.dispatchEvent(new CustomEvent(name, {
+          composed: true,
+          bubbles: true,
+          detail: detail
+        }))
       }
     }
     customElements.define(AppState.is, AppState);

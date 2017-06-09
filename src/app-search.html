@@ -244,9 +244,11 @@
         if (!this.focused)
           return;
         if (e.key === "Escape") {
+          e.preventDefault();
           this.$.selector.select(undefined);
           this._blur();
         } else if (e.key === "Enter") {
+          e.preventDefault();
           this.$.selector.selectedItem.click();
           this._blur();
         } else if (e.key === "ArrowUp" || e.key === "Up") {

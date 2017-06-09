@@ -3,9 +3,9 @@
 
 <dom-module id="app-data">
   <template>
-    
+
+    <idb-data id="mirrorSettings" data="[[state.settings]]" key="settings"></idb-data>
     <fire-data id="serverSettings" data="[[state.settings]]" active="[[state.online]]" path="[[_makePathForUsersSettings(state.user.uid)]]"></fire-data>
-    <idb-data id="mirrorSettings" key="settings" data="[[state.settings]]"></idb-data>
 
   </template>
   <script>
@@ -24,29 +24,30 @@
         }
       }
 
-      ready() {
-        super.ready();
+      connectedCallback() {
+        super.connectedCallback();
 
         this.$.serverSettings.addEventListener("new-firedata",  (e) => this._handleServerSettings(e.detail));
         this.$.mirrorSettings.addEventListener("new-idbdata",   (e) => this._handleMirrorSettings(e.detail));
       }
 
       _makePathForUsersSettings(uid) {
-        if (uid) {
-          return `users/${uid}/settings`
-        }
-        return null;
-      }
-
-      _handleServerSettings(settings) {
-        if (settings)
-          this.set("mergedState", Immutable.set(this.mergedState, "settings", settings, {deep: 'true'}));
-        this.fire("update-state", this.mergedState);
+        return uid ? `users/${uid}/settings` : null;
       }
 
       _handleMirrorSettings(settings) {
-        if (settings)
+        if (settings) {
+          console.log("idb  settings", window.performance.now());
           this.set("mergedState", Immutable.set(this.mergedState, "settings", settings, {deep: 'true'}));
+        }
+        this.fire("update-state", this.mergedState);
+      }
+
+      _handleServerSettings(settings) {
+        if (settings) {
+          console.log("fire settings", window.performance.now());
+          this.set("mergedState", Immutable.set(this.mergedState, "settings", settings, {deep: 'true'}));
+        }
         this.fire("update-state", this.mergedState);
       }
 

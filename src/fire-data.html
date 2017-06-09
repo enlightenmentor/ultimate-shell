@@ -15,7 +15,7 @@
           _ref: {
             type: Object,
             computed: "_establishConnection(path, active)"
-          }
+          },
         }
       }
 
@@ -43,8 +43,9 @@
 
       _storeData(data, reference) {
         if (data && this.serverData !== undefined && reference) {
-          const changes = Tools.filterDeep(data, this.serverData);
+          var changes = Tools.filterDeep(data, this.serverData);
           if (changes) {
+            // changes.createdAt = firebase.database.ServerValue.TIMESTAMP;
             reference.update(changes);
           }
         }

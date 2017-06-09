@@ -54,14 +54,8 @@ const deleteOldCaches = async (cacheWhitelist) => {
 const fetchResponse = async (cacheName, request) => {
   const cache = await caches.open(cacheName);
   let response = await cache.match(request);
-  // if (response)
-  //   const cacheVersion = response.headers.get('Last-Modified');
-  //   console.log(`Request ${request.url} cacheVersion: ${cacheVersion}`);  
-  // }
   if (!response) {
     response = await fetch(request);
-    // const serverVersion = response.headers.get('Last-Modified');
-    //   console.log(`Request ${request.url} serverVersion: ${serverVersion}`);
     if (request.method == 'GET')
       cache.put(request, response.clone());
   }
