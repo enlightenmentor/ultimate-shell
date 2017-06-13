@@ -27,7 +27,7 @@
                 'https://accounts.google.com'
               ]
             },
-            unmediated: true
+            mediation: 'silent'
           }).then(cred => {
             if (cred) {
               const user = {
@@ -85,7 +85,7 @@
           }
         } else {
           if (navigator.credentials) {
-            navigator.credentials.requireUserMediation();
+            navigator.credentials.preventSilentAccess();
           }
         }
         this.fire("user-changed", user);
