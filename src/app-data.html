@@ -1,11 +1,15 @@
+<link rel="import" href="storage-data.html">
 <link rel="import" href="fire-data.html">
 <link rel="import" href="idb-data.html">
 
 <dom-module id="app-data">
   <template>
 
-    <idb-data id="mirrorSettings" data="[[state.settings]]" key="settings"></idb-data>
-    <fire-data id="serverSettings" data="[[state.settings]]" active="[[state.online]]" path="[[_makePathForUsersSettings(state.user.uid)]]"></fire-data>
+    <storage-data id="connectionLost" key="connection-lost"></storage-data>
+    <fire-data id="serverAlbums" path="common/albums"></fire-data>
+    <idb-data id="mirrorAlbums" key="albums"></idb-data>
+    <fire-data id="serverSettings"><fire-data>
+    <idb-data id="mirrorSettings" key="settings"></idb-data>
 
   </template>
   <script>
@@ -24,30 +28,70 @@
         }
       }
 
+      static get observers() {
+        return [
+          "_writeSettings(state.settings.*)",
+          "_writeAlbums(state.albums)"
+        ]
+      }
+
       connectedCallback() {
         super.connectedCallback();
 
-        this.$.serverSettings.addEventListener("new-firedata",  (e) => this._handleServerSettings(e.detail));
-        this.$.mirrorSettings.addEventListener("new-idbdata",   (e) => this._handleMirrorSettings(e.detail));
+        this._readData(this.$.mirrorSettings, 'settings');
+        this._readData(this.$.mirrorAlbums, 'albums');
+        this._readData(this.$.serverAlbums, 'albums');
+        // this.$.serverAlbums.addEventListener('new-firedata', (e) => this._mergeState(e.detail, 'albums') );
+
+        this._serverSettingsCallback = (e) => this._mergeState(e.detail, 'settings');
       }
 
-      _makePathForUsersSettings(uid) {
-        return uid ? `users/${uid}/settings` : null;
-      }
-
-      _handleMirrorSettings(settings) {
-        if (settings) {
-          console.log("idb  settings", window.performance.now());
-          this.set("mergedState", Immutable.set(this.mergedState, "settings", settings, {deep: 'true'}));
+      async userIn(user) {
+        this.$.serverSettings.path = `users/${user.uid}/settings`;
+        if (this.$.connectionLost.read()) {
+          this.$.serverSettings.write(this.state.settings);
+          this.$.connectionLost.remove();
         }
-        this.fire("update-state", this.mergedState);
+        await this._readData(this.$.serverSettings, 'settings');
+        this.$.serverSettings.addEventListener('new-firedata', this._serverSettingsCallback);
       }
 
-      _handleServerSettings(settings) {
-        if (settings) {
-          console.log("fire settings", window.performance.now());
-          this.set("mergedState", Immutable.set(this.mergedState, "settings", settings, {deep: 'true'}));
+      userOut() {
+        this.$.connectionLost.write(true);
+        this.$.serverSettings.path = undefined;
+        this.$.serverSettings.removeEventListener('new-firedata', this._serverSettingsCallback);
+      }
+
+      online() {
+        if (this.$.connectionLost.read() && this.state.user && this.state.user.uid) {
+          this.$.serverSettings.write(this.state.settings);
+          this.$.connectionLost.remove();
         }
+      }
+
+      offline() {
+        this.$.connectionLost.write(true);
+      }
+
+      async _readData(element, path) {
+        const data = await element.read();
+        this._mergeState(data, path);
+      }
+
+      _writeSettings() {
+        this.$.mirrorSettings.write(this.state.settings);
+        if (this.state.user && this.state.user.uid && this.state.online)
+          this.$.serverSettings.write(this.state.settings);
+      }
+
+      _writeAlbums() {
+        this.$.mirrorAlbums.write(this.state.albums);
+      }
+
+      _mergeState(data, path) {
+        console.log('merge state', window.performance.now());
+        if (data && path)
+          this.set(`mergedState.${path}`, data);
         this.fire("update-state", this.mergedState);
       }
 

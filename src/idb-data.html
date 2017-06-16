@@ -19,52 +19,9 @@
             type: String,
             computed: "_makeStoreKey(key)"
           },
-          data: Object,
+          // data: Object,
           storedData: Object,
           dbPromise: Object
-        }
-      }
-
-      static get observers() {
-        return [
-          "_storeData(data, key, dbPromise)",
-        ]
-      }
-
-      ready() {
-        super.ready();
-
-        this.dbPromise = idb.open(this._dbKey, 1, upgradeDB => {
-          upgradeDB.createObjectStore(this._storeKey);
-        });
-        this.getStoredData();
-      }
-
-      getStoredData() {
-        this.dbPromise.then(db => {
-          const transaction = db.transaction(this._storeKey);
-          return transaction.objectStore(this._storeKey).get(this.key);
-        }).then(value => {
-          if (!value)
-            value = null;
-          this.set("storedData", value);
-          this.fire("new-idbdata", this.storedData);
-        });
-      }
-
-      _storeData(data, key, dbPromise) {
-        if (data && key && dbPromise && this.storedData !== undefined) {
-          const changes = Tools.filterDeep(data, this.storedData);
-          if (changes) {
-            this.dbPromise.then(db => {
-              const transaction = db.transaction(this._storeKey, 'readwrite');
-              transaction.objectStore(this._storeKey).put(data, key);
-              return transaction.complete;
-            }).then(() => {
-              this.set("storedData", data); // Mutable DANGER!!! should be immutable
-              this.fire("new-idbdata", this.storedData);
-            });
-          }
         }
       }
 
@@ -74,6 +31,45 @@
 
       _makeStoreKey(key) {
         return `${this.key}-store`;
+      }
+
+      connectedCallback() {
+        super.connectedCallback();
+        this._establishConnection();
+      }
+
+      _establishConnection() {
+        this.dbPromise = idb.open(this._dbKey, 1, upgradeDB => {
+          upgradeDB.createObjectStore(this._storeKey);
+        });
+        console.log(`<idb-data id='${this.id}'>: connect`, window.performance.now());
+      }
+
+      async read() {
+        const db = await this.dbPromise;
+        const transaction = db.transaction(this._storeKey);
+        let value = await transaction.objectStore(this._storeKey).get(this.key);
+        if (!value)
+          value = null;
+        this.set("storedData", value);
+        console.log(`<idb-data id='${this.id}'>: read`, window.performance.now());
+        return value;
+      }
+
+      write(data) {
+        if (data && this.key && this.dbPromise && this.storedData !== undefined) {
+          const changes = Tools.filterDeep(data, this.storedData);
+          if (changes) {
+            this.dbPromise.then(db => {
+              const transaction = db.transaction(this._storeKey, 'readwrite');
+              transaction.objectStore(this._storeKey).put(data, this.key);
+              return transaction.complete;
+            }).then(() => {
+              this.set("storedData", Object.assign({}, data)); // Mutable DANGER!!! should be immutable
+              console.log(`<idb-data id='${this.id}'>: write`, window.performance.now());
+            });
+          }
+        }
       }
 
       fire(name, detail) {

@@ -83,12 +83,13 @@
             });
             navigator.credentials.store(cred);
           }
+          this.fire("user-signin", user);
         } else {
           if (navigator.credentials) {
             navigator.credentials.preventSilentAccess();
           }
+          this.fire("user-signout");
         }
-        this.fire("user-changed", user);
       }
 
       fire(name, detail) {

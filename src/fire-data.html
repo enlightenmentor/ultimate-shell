@@ -8,47 +8,60 @@
 
       static get properties() {
         return {
-          data: Object,
+          // data: Object,
           serverData: Object,
           path: String,
-          active: Boolean,
           _ref: {
             type: Object,
-            computed: "_establishConnection(path, active)"
+            computed: "_establishConnection(path)",
+            // observer: "read"
           },
         }
       }
 
-      static get observers() {
-        return [
-          "_storeData(data, _ref)"
-        ]
-      }
-
-      _establishConnection(path, active) {
+      _establishConnection(path) {
         let ref;
-        if (path && active) {
+        if (path) {
           ref = firebase.database().ref(path);
-          ref.on("value", (snapshot) => this._getServerData(snapshot));
+          ref.on("value", (snapshot) => this._update(snapshot));
+          console.log(`<fire-data id='${this.id}'>: connect`, window.performance.now());
         } else {
           ref = null;
+          console.log(`<fire-data id='${this.id}'>: disconnect`, window.performance.now());
         }
         return ref;
       }
 
-      _getServerData(snapshot) {
-        this.set("serverData", snapshot.val());
-        this.fire("new-firedata", this.serverData);
+      async read() {
+        if (!this._ref)
+          return;
+        if (this.serverData)
+          return this.serverData;
+        return new Promise((resolve, reject) => {
+          const callback = (snapshot) => {
+            this._ref.off("value", callback);
+            console.log(`<fire-data id='${this.id}'>: read`, window.performance.now());
+            this.set("serverData", snapshot.val());
+            return resolve(snapshot.val());
+          };
+          this._ref.on("value", callback);
+        });
       }
 
-      _storeData(data, reference) {
-        if (data && this.serverData !== undefined && reference) {
+      write(data) {
+        if (data && this.serverData !== undefined && this._ref) {
           var changes = Tools.filterDeep(data, this.serverData);
           if (changes) {
-            // changes.createdAt = firebase.database.ServerValue.TIMESTAMP;
-            reference.update(changes);
+            console.log(`<fire-data id='${this.id}'>: write`, window.performance.now());
+            this._ref.update(changes);
           }
         }
+      }
+
+      _update(snapshot) {
+        console.log(`<fire-data id='${this.id}'>: update`, window.performance.now());
+        this.set("serverData", snapshot.val());
+        this.fire("new-firedata", snapshot.val());
       }
 
       fire(name, detail) {

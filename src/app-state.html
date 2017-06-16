@@ -6,7 +6,9 @@
 <dom-module id="app-state">
   <template>
     
-    <app-data state="[[state]]"></app-data>
+    <app-data id="data" state="[[state]]"></app-data>
+
+    <!--<app-history></app-history>-->
 
     <slot></slot>
 
@@ -43,7 +45,7 @@
       constructor() {
         super();
         
-        this.set("state", Immutable.merge(this.state, this.defaultState, {deep: 'true'}));
+        this.set("state", Tools.mergeDeepWithNullToDelete(this.state, this.defaultState));
       }
 
       connectedCallback() {
@@ -53,30 +55,33 @@
         window.addEventListener("offline",                    (e) => this._handleOffline(e));
         this.addEventListener("update-state",                 (e) => this._updateState(e.detail));
         this.addEventListener("route-changed",                (e) => this._handleRoute(e.detail));
-        this.addEventListener("user-changed",                 (e) => this._handleUser(e.detail));
+        this.addEventListener("user-signin",                  (e) => this._handleUserIn(e.detail));
+        this.addEventListener("user-signout",                 (e) => this._handleUserOut());
         this.addEventListener("settings-changed",             (e) => this._handleSettings(e.detail));
         this.addEventListener("dialog-submitted",             (e) => console.log("Dialog result", e.detail));
       }
 
       _updateState(newState) {
-        this.set("state", Immutable.merge(this.state, newState, {deep: 'true'}));
+        this.set("state", Tools.mergeDeepWithNullToDelete(this.state, newState));
       }
 
       _handleOnline(e) {
-        this.set("state.online", true);
-        this._showSnackbar("The device is online")
+        this.set('state.online', true);
+        this._showSnackbar("The device is online");
+        this.$.data.online();
       }
 
       _handleOffline(e) {
-        this.set("state.online", false);
-        this._showSnackbar("The device is offline")
+        this.set('state.online', false);
+        this._showSnackbar("The device is offline");
+        this.$.data.offline();
       }
 
       _handleRoute(route) {
         if (["home","one","two","settings"].indexOf(route.segments[0]) === -1)
-          this.set("state", Immutable.set(this.state, "page", "page404", {deep: 'true'}));
+          this.set('state.page', "page404");
         else 
-          this.set("state", Immutable.set(this.state, "page", route.segments[0], {deep: 'true'}));
+          this.set('state.page', route.segments[0]);
 
         this._makeTitle(this.state.page);
       }
@@ -85,12 +90,18 @@
         document.title = `${page[0].toUpperCase() + page.substr(1)} - Ultimate Shell`;
       }
 
-      _handleUser(user) {
-        this.set("state", Immutable.set(this.state, "user", user, {deep: 'true'}));
+      _handleUserIn(user) {
+        this.set('state.user', user);
+        this.$.data.userIn(user);
+      }
+
+      _handleUserOut() {
+        this.set('state.user', null);
+        this.$.data.userOut();
       }
 
       _handleSettings(change) {
-        this.set('state', Immutable.setIn(this.state, ["settings", change.key], change.value, {deep: 'true'}));
+        this.set(`state.settings.${change.key}`, change.value);
       }
 
       _showSnackbar(text) {
