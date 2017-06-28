@@ -1,11 +1,9 @@
-<link rel="import" href="storage-data.html">
 <link rel="import" href="fire-data.html">
 <link rel="import" href="idb-data.html">
 
 <dom-module id="app-data">
   <template>
 
-    <storage-data id="connectionLost" key="connection-lost"></storage-data>
     <fire-data id="serverAlbums" path="common/albums"></fire-data>
     <idb-data id="mirrorAlbums" key="albums"></idb-data>
     <fire-data id="serverSettings"><fire-data>
@@ -35,47 +33,44 @@
         ]
       }
 
-      connectedCallback() {
-        super.connectedCallback();
+      constructor() {
+        super();
 
-        this._readData(this.$.mirrorSettings, 'settings');
-        this._readData(this.$.mirrorAlbums, 'albums');
-        this._readData(this.$.serverAlbums, 'albums');
-        // this.$.serverAlbums.addEventListener('new-firedata', (e) => this._mergeState(e.detail, 'albums') );
+        window.addEventListener("app-load", async (e) => {
+          console.log(`firstLoad: ${e.detail.firstLoad}, online: ${navigator.onLine}`);
+
+          let mSettings = await this.$.mirrorSettings.read();
+          this._mergeState(mSettings, 'settings');
+          let mAlbums = await this.$.mirrorAlbums.read();
+          this._mergeState(mAlbums, 'albums');
+          let sAlbums = await this.$.serverAlbums.read();
+          this._mergeState(sAlbums, 'albums');
+        });
+
+        window.addEventListener("online", (e) => {
+          if (this.state.user && this.state.user.uid)
+            this.$.serverSettings.write(this.state.settings);
+        });
+
+        window.addEventListener("offline", (e) => {
+
+        });
 
         this._serverSettingsCallback = (e) => this._mergeState(e.detail, 'settings');
       }
 
+      // called from outside
       async userIn(user) {
         this.$.serverSettings.path = `users/${user.uid}/settings`;
-        if (this.$.connectionLost.read()) {
-          this.$.serverSettings.write(this.state.settings);
-          this.$.connectionLost.remove();
-        }
-        await this._readData(this.$.serverSettings, 'settings');
+        let sSettings = await this.$.serverSettings.read();
+        this._mergeState(sSettings, 'settings');
         this.$.serverSettings.addEventListener('new-firedata', this._serverSettingsCallback);
       }
 
+      // called from outside
       userOut() {
-        this.$.connectionLost.write(true);
         this.$.serverSettings.path = undefined;
         this.$.serverSettings.removeEventListener('new-firedata', this._serverSettingsCallback);
-      }
-
-      online() {
-        if (this.$.connectionLost.read() && this.state.user && this.state.user.uid) {
-          this.$.serverSettings.write(this.state.settings);
-          this.$.connectionLost.remove();
-        }
-      }
-
-      offline() {
-        this.$.connectionLost.write(true);
-      }
-
-      async _readData(element, path) {
-        const data = await element.read();
-        this._mergeState(data, path);
       }
 
       _writeSettings() {
@@ -102,16 +97,6 @@
           detail: detail
         }))
       }
-
-      // AND() {
-      //   let res = true;
-      //   for (let i = 0; i<arguments.length; i++) {
-      //     res = res && !!arguments[i];
-      //     if (!res)
-      //       return res;
-      //   }
-      //   return res;
-      // }
     }
     customElements.define(AppData.is, AppData);
   </script>

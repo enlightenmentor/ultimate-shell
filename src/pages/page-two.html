@@ -4,23 +4,31 @@
   <template>
     <style include="paper-shadows">
       :host {
-        display: flex;
+        display: block;
         width: 100%;
         min-height: 100%;
-        flex-wrap: wrap;
-        align-items: flex-start;
-        justify-content: center;
         box-sizing: border-box;
         padding: 12px 16px;
         background-color: var(--light-secondary-color);
       }
+      #gridWrapper {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-start;
+        justify-content: center;
+      }
       .album-card {
         display: inline-block;
+        width: 180px;
         position: relative;
         margin: 8px;
         border-radius: 2px;
         overflow: hidden;
         @apply --shadow-elevation-2dp;
+      }
+      .album-card:empty {
+        height: 0;
+        @apply --shadow-none;
       }
       .album-cover {
         display: flex;
@@ -53,16 +61,28 @@
       }
     </style>
 
-    <template is="dom-repeat" items="[[albums]]">
-      <div class="album-card">
-        <iron-image class="album-cover" sizing="cover" preload fade src="../../images/covers/[[item.cover]]"></iron-image>
-        <div class="album-text">
-          <div class="album-artist">[[item.artist]]</div>
-          <div class="album-title">[[item.album]]</div>
-          <div class="album-year">[[item.year]]</div>
+    <div id="gridWrapper">
+      <template is="dom-repeat" items="[[albums]]">
+        <div class="album-card">
+          <iron-image class="album-cover" sizing="cover" preload fade src="../../images/covers/[[item.cover]]"></iron-image>
+          <div class="album-text">
+            <div class="album-artist">[[item.artist]]</div>
+            <div class="album-title">[[item.album]]</div>
+            <div class="album-year">[[item.year]]</div>
+          </div>
         </div>
-      </div>
-    </template>
+      </template>
+      <!--Empty cards for flexbox grid-->
+      <div class="album-card"></div>
+      <div class="album-card"></div>
+      <div class="album-card"></div>
+      <div class="album-card"></div>
+      <div class="album-card"></div>
+      <div class="album-card"></div>
+      <div class="album-card"></div>
+      <div class="album-card"></div>
+      <div class="album-card"></div>
+    </div>
 
   </template>
 

@@ -43,8 +43,8 @@
             if (profile) {
               updateUI(profile);
             }
-          }).catch(error => {
-            showError('Sign-in Failed');
+          }).catch(err => {
+            throw new Error(err);
           });;
         }
         firebase.auth().onAuthStateChanged(this._userChange.bind(this));
