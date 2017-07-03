@@ -3,6 +3,19 @@
  */
 class Tools {
 
+  static deepFreeze(o) {
+    Object.freeze(o);
+    Object.getOwnPropertyNames(o).forEach((prop) => {
+      if (o.hasOwnProperty(prop) &&
+        o[prop] !== null &&
+        (typeof o[prop] === "object" || typeof o[prop] === "function") &&
+        !Object.isFrozen(o[prop])) {
+        this.deepFreeze(o[prop]);
+      }
+    });
+    return o;
+  }
+
   //returns an immutable copy of A with the branches of B either
   // - merged (if they differ) or
   // - nulled out in result (if B point null value).

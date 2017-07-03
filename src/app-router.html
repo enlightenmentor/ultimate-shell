@@ -14,28 +14,27 @@
       static get properties() {
         return {
           defaultUrl: String,
+          route: {
+            type: Object,
+            notify: true
+          }
         }
       }
 
       static get observers() {
-        return ["_pathChanged(_path, _query, _hash)"];
+        return ["_pathChanged(defaultUrl, _path, _query, _hash)"];
       }
 
-      connectedCallback() {
-        super.connectedCallback();
-        this._pathChanged();
-      }
-
-      _pathChanged() {
-        if (location.pathname === "/" && this.defaultUrl)
-          this.setUrl(this.defaultUrl);
-        this.fire("route-changed", AppRouter.parseUrl(location));
+      _pathChanged(defaultUrl) {
+        if (location.pathname === "/" && defaultUrl)
+          this.setUrl(`/${defaultUrl}`);
+        this.set('route', AppRouter.parseUrl(location));
       }
 
       setUrl(url) {
         if (AppRouter.parseUrl(location).url !== url) {
           history.pushState({}, null, url);
-          this.fire("route-changed", AppRouter.parseUrl(location));
+          this.set('route', AppRouter.parseUrl(location));
         }
       }
 

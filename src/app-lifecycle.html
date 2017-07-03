@@ -5,25 +5,6 @@
         return "app-lifecycle";
       }
 
-      static get properties() {
-        return {}
-      }
-
-      connectedCallback() {
-        super.connectedCallback();
-        this.fire("app-load", {firstLoad: this._isFirstLoad()});
-        this._setLoadCookie(60*60); // param in seconds
-      }
-
-      _isFirstLoad() {
-        return document.cookie.indexOf('loaded-before') === -1;
-      }
-
-      _setLoadCookie(sec) {
-        let date = new Date(new Date().getTime() + sec*1000);
-        document.cookie = `loaded-before=true; expires=${date.toUTCString()}`;
-      }
-
       fire(name, detail) {
         this.dispatchEvent(new CustomEvent(name, {
           composed: true,

@@ -13,7 +13,8 @@
 <script src="https://www.gstatic.com/firebasejs/4.0.0/firebase-database.js"></script>
 
 <link rel="import" href="app-state.html">
-<link rel="import" href="fire-auth.html">
+<link rel="import" href="app-data.html">
+<link rel="import" href="app-lifecycle.html">
 <link rel="import" href="app-router.html">
 <link rel="import" href="app-toolbar.html">
 <link rel="import" href="app-search.html">
@@ -96,73 +97,70 @@
       }
     </style>
 
-    <app-state state="{{state}}">
+    <app-state state="{{state}}"></app-state>
 
-      <app-router default-url="/home"></app-router>
+    <app-router default-url="home" route="{{route}}"></app-router>
 
-      <fire-auth id="auth"></fire-auth>
+    <app-data id="data" user-settings="[[state.settings]]" user="[[state.user]]"></app-data>
 
-      <iron-media-query query="(min-width: 600px)" query-matches="{{queryMin600}}"></iron-media-query>
-      <iron-media-query query="(max-width: 900px)" query-matches="{{queryMax900}}"></iron-media-query>
+    <iron-media-query query="(min-width: 600px)" query-matches="{{queryMin600}}"></iron-media-query>
+    <iron-media-query query="(max-width: 900px)" query-matches="{{queryMax900}}"></iron-media-query>
 
-      <app-toolbar persistent="[[queryMin600]]" title="[[state.page]]">
-        <paper-icon-button slot="menu" icon="menu" on-tap="_toggleDrawer"></paper-icon-button>
-        <app-search slot="search" closed="[[!queryMin600]]"></app-search>
-        <paper-icon-button id="anonymPhoto" icon="social:person" hidden$="[[state.user]]" on-tap="_signIn"></paper-icon-button>
-        <div id="userPhoto" style="background-image: url([[state.user.photo]])" hidden$="[[!state.user]]" on-tap="_signOut"></div>
-      </app-toolbar>
+    <app-toolbar persistent="[[queryMin600]]" title="[[route.segments.0]]">
+      <paper-icon-button slot="menu" icon="menu" on-tap="_toggleDrawer"></paper-icon-button>
+      <app-search slot="search" closed="[[!queryMin600]]"></app-search>
+      <paper-icon-button id="anonymPhoto" icon="social:person" hidden$="[[state.user]]" on-tap="_signIn"></paper-icon-button>
+      <div id="userPhoto" style="background-image: url([[state.user.photo]])" hidden$="[[!state.user]]" on-tap="_signOut"></div>
+    </app-toolbar>
 
-      <app-drawer id="drawer" opened="[[!queryMax900]]" persistent="[[queryMin600]]">
-        <div id="drawerHeader">
-          Best App Shell
-        </div>
-        <div id="drawerMenu">
-          <iron-selector selected="[[state.page]]" attr-for-selected="page">
-            <a href="/home" page="home" on-tap="_closeMobileDrawer">
-              <paper-icon-item>
-                <iron-icon icon="home" slot="item-icon"></iron-icon>
-                Home
-              </paper-icon-item>
-            </a>
-            <a href="/one" page="one" on-tap="_closeMobileDrawer">
-              <paper-icon-item>
-                <iron-icon icon="content-copy" slot="item-icon"></iron-icon>
-                Page One
-              </paper-icon-item>
-            </a>
-            <a href="/two" page="two" on-tap="_closeMobileDrawer">
-              <paper-icon-item>
-                <iron-icon icon="content-copy" slot="item-icon"></iron-icon>
-                Page Two
-              </paper-icon-item>
-            </a>
-            <div id="separator"></div>
-            <a href="/settings" page="settings" on-tap="_closeMobileDrawer">
-              <paper-icon-item>
-                <iron-icon icon="settings" slot="item-icon"></iron-icon>
-                Settings
-              </paper-icon-item>
-            </a>
-          </iron-selector>
-        </div>
-      </app-drawer>
+    <app-drawer id="drawer" opened="[[!queryMax900]]" persistent="[[queryMin600]]">
+      <div id="drawerHeader">
+        Best App Shell
+      </div>
+      <div id="drawerMenu">
+        <iron-selector selected="[[route.segments.0]]" attr-for-selected="page">
+          <a href="/home" page="home" on-tap="_closeMobileDrawer">
+            <paper-icon-item>
+              <iron-icon icon="home" slot="item-icon"></iron-icon>
+              Home
+            </paper-icon-item>
+          </a>
+          <a href="/one" page="one" on-tap="_closeMobileDrawer">
+            <paper-icon-item>
+              <iron-icon icon="content-copy" slot="item-icon"></iron-icon>
+              Page One
+            </paper-icon-item>
+          </a>
+          <a href="/two" page="two" on-tap="_closeMobileDrawer">
+            <paper-icon-item>
+              <iron-icon icon="content-copy" slot="item-icon"></iron-icon>
+              Page Two
+            </paper-icon-item>
+          </a>
+          <div id="separator"></div>
+          <a href="/settings" page="settings" on-tap="_closeMobileDrawer">
+            <paper-icon-item>
+              <iron-icon icon="settings" slot="item-icon"></iron-icon>
+              Settings
+            </paper-icon-item>
+          </a>
+        </iron-selector>
+      </div>
+    </app-drawer>
 
-      <app-content id="content" page="[[state.page]]" persistent="[[!queryMin600]]" squeezed="[[!queryMax900]]">
-        <page-home page="home" user="[[state.user]]"></page-home>
-        <page-one page="one"></page-one>
-        <page-two page="two" albums="[[state.albums]]"></page-two>
-        <page-404 page="404"></page-404>
-        <page-settings page="settings" settings="[[state.settings]]"></page-settings>
-      </app-content>
+    <app-content id="content" page="[[route.segments.0]]" persistent="[[!queryMin600]]" squeezed="[[!queryMax900]]">
+      <page-home page="home" user="[[state.user]]"></page-home>
+      <page-one page="one"></page-one>
+      <page-two page="two" albums="[[state.albums]]"></page-two>
+      <page-404 page="page404"></page-404>
+      <page-settings page="settings" settings="[[state.settings]]"></page-settings>
+    </app-content>
 
-      <app-snackbar id="snackbar"></app-snackbar>
-
-    </app-state>
+    <app-snackbar id="snackbar"></app-snackbar>
 
   </template>
 
   <script>
-
     // google-analytics
 
     firebase.initializeApp({
@@ -188,15 +186,16 @@
       connectedCallback() {
         super.connectedCallback();
         this.removeAttribute('unresolved');
+        this.fire('app-connected');
         this.addEventListener("show-snackbar", (e) => this._showSnackbar(e.detail));
       }
 
       _signIn() {
-        this.$.auth.signIn();
+        this.$.data.signIn();
       }
 
       _signOut() {
-        this.$.auth.signOut();
+        this.$.data.signOut();
       }
 
       _toggleDrawer() {

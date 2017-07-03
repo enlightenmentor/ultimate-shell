@@ -12,84 +12,31 @@
             type: Object,
             notify: true,
           },
-          provider: Object,
+          provider: {
+            type: Object,
+            value: () => {
+              const provider = new firebase.auth.GoogleAuthProvider();
+              provider.addScope('https://www.googleapis.com/auth/contacts.readonly'); // OAuth 2.0
+              return provider;
+            }
+          },
         };
       }
 
-      connectedCallback() {
-        super.connectedCallback();
-
-        if (navigator.credentials) {
-          navigator.credentials.get({
-            password: true,
-            federated: {
-              providers: [
-                'https://accounts.google.com'
-              ]
-            },
-            mediation: 'silent'
-          }).then(cred => {
-            if (cred) {
-              const user = {
-                name: cred.name,
-                email: cred.id,
-                photo: cred.iconURL
-              }
-              this.fire("user-changed", user);
-            } else {
-              return Promise.resolve();
-            }
-          }).then(profile => {
-            if (profile) {
-              updateUI(profile);
-            }
-          }).catch(err => {
-            throw new Error(err);
-          });;
-        }
-        firebase.auth().onAuthStateChanged(this._userChange.bind(this));
-        this.set("provider", new firebase.auth.GoogleAuthProvider());
-        this.provider.addScope('https://www.googleapis.com/auth/contacts.readonly'); // OAuth 2.0
+      checkUser() {
+        return new Promise((resolve, reject) => {
+          firebase.auth().onAuthStateChanged((user) => {
+            return resolve(user);
+          });
+        });
       }
 
       signIn() {
-        firebase.auth().signInWithPopup(this.provider)
-          .catch(err => {
-            throw new Error(err);
-          });
+        return firebase.auth().signInWithPopup(this.provider);
       }
 
       signOut() {
-        firebase.auth().signOut()
-          .catch(err => {
-            throw new Error(err);
-          });
-      }
-
-      _userChange(user) {
-        if (user) {
-          user = {
-            name: user.displayName,
-            email: user.email,
-            photo: user.photoURL,
-            uid: user.uid
-          }
-          if (navigator.credentials) {
-            const cred = new FederatedCredential({
-              id: user.email,
-              name: user.name,
-              iconURL: user.photo,
-              provider: 'https://accounts.google.com'
-            });
-            navigator.credentials.store(cred);
-          }
-          this.fire("user-signin", user);
-        } else {
-          if (navigator.credentials) {
-            navigator.credentials.preventSilentAccess();
-          }
-          this.fire("user-signout");
-        }
+        return firebase.auth().signOut();
       }
 
       fire(name, detail) {

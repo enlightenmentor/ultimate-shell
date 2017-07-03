@@ -1,13 +1,12 @@
 <link rel="import" href="fire-data.html">
-<link rel="import" href="idb-data.html">
+<link rel="import" href="fire-auth.html">
 
 <dom-module id="app-data">
   <template>
 
-    <fire-data id="serverAlbums" path="common/albums"></fire-data>
-    <idb-data id="mirrorAlbums" key="albums"></idb-data>
-    <fire-data id="serverSettings"><fire-data>
-    <idb-data id="mirrorSettings" key="settings"></idb-data>
+    <fire-data id="albums" path="common/albums"></fire-data>
+    <fire-data id="settings"></fire-data>
+    <fire-auth id="auth"></fire-auth>
 
   </template>
   <script>
@@ -18,76 +17,127 @@
 
       static get properties() {
         return {
-          state: Object,
-          mergedState: {
+          userSettings: {
             type: Object,
-            value: () => ({})
-          }
+            observer: '_writeUserSettings'
+          },
+          user: Object
         }
-      }
-
-      static get observers() {
-        return [
-          "_writeSettings(state.settings.*)",
-          "_writeAlbums(state.albums)"
-        ]
       }
 
       constructor() {
         super();
+        window.addEventListener('app-connected', (e) => this._appConnected());
+        window.addEventListener('online', (e) => this._appOnline());
+        window.addEventListener('offline', (e) => this._appOffline());
+      }
 
-        window.addEventListener("app-load", async (e) => {
-          console.log(`firstLoad: ${e.detail.firstLoad}, online: ${navigator.onLine}`);
-
-          let mSettings = await this.$.mirrorSettings.read();
-          this._mergeState(mSettings, 'settings');
-          let mAlbums = await this.$.mirrorAlbums.read();
-          this._mergeState(mAlbums, 'albums');
-          let sAlbums = await this.$.serverAlbums.read();
-          this._mergeState(sAlbums, 'albums');
+      _appConnected() {
+        // reading server albums (static data that everybody can see)
+        this.$.albums.read().then((albums) => {
+          this.fire('state-action', {
+            type: 'SERVER_ALBUMS',
+            payload: albums
+          })
+        });
+        // listening on changes of albums
+        this.$.albums.listen((data) => {
+          this.fire('state-action', {
+            type: 'SERVER_ALBUMS',
+            payload: data
+          })
         });
 
-        window.addEventListener("online", (e) => {
-          if (this.state.user && this.state.user.uid)
-            this.$.serverSettings.write(this.state.settings);
+        // cheching if user was signed in last session
+        this.$.auth.checkUser().then((user) => {
+          if (user) {
+            user = this._makeUser(user);
+            this.fire("state-action", {
+              type: "USER_IN",
+              payload: user
+            });
+            this._readUserSettings(user);
+          } else {
+            this.fire("state-action", {
+              type: "USER_OUT"
+            });
+          }
         });
+      }
 
-        window.addEventListener("offline", (e) => {
+      _appOnline() {
+        this._writeUserSettings(this.userSettings);
+        if (this.user) {
+          this._readUserSettings(this.user);
+        }
+      }
 
+      signIn() {
+        this.$.auth.signIn()
+          .then((result) => {
+            const user = this._makeUser(result.user);
+            this.fire("state-action", {
+              type: "USER_IN",
+              payload: user
+            });
+            this._readUserSettings(user);
+          })
+          .catch((err) => {
+            throw new Error(err);
+          });
+      }
+
+      signOut() {
+        // if user is out disconnecting user settings fire-data
+        this.$.settings.path = undefined;
+        this.$.settings.stopListen();
+        this.$.auth.signOut()
+          .then(() => {
+            this.fire("state-action", {
+              type: "USER_OUT"
+            });
+          })
+          .catch((err) => {
+            throw new Error(err);
+          });
+      }
+
+      _makeUser(user) {
+        return {
+          name: user.displayName,
+          email: user.email,
+          photo: user.photoURL,
+          uid: user.uid
+        };
+      }
+
+      _readUserSettings(user) {
+        // if user is in reading server user settings
+        this.$.settings.read(`users/${user.uid}/settings`)
+          .then((settings) => {
+            if (settings) {
+              this.fire('state-action', {
+                type: 'SERVER_SETTINGS',
+                payload: settings
+              })
+            }
+          });
+        // listening on changes for user settings (relevant for data that can be changed not only by this user)
+        this.$.settings.listen((data) => {
+          if (data) {
+            this.fire('state-action', {
+              type: 'SERVER_SETTINGS',
+              payload: data
+            })
+          }
         });
-
-        this._serverSettingsCallback = (e) => this._mergeState(e.detail, 'settings');
       }
 
-      // called from outside
-      async userIn(user) {
-        this.$.serverSettings.path = `users/${user.uid}/settings`;
-        let sSettings = await this.$.serverSettings.read();
-        this._mergeState(sSettings, 'settings');
-        this.$.serverSettings.addEventListener('new-firedata', this._serverSettingsCallback);
-      }
-
-      // called from outside
-      userOut() {
-        this.$.serverSettings.path = undefined;
-        this.$.serverSettings.removeEventListener('new-firedata', this._serverSettingsCallback);
-      }
-
-      _writeSettings() {
-        this.$.mirrorSettings.write(this.state.settings);
-        if (this.state.user && this.state.user.uid && this.state.online)
-          this.$.serverSettings.write(this.state.settings);
-      }
-
-      _writeAlbums() {
-        this.$.mirrorAlbums.write(this.state.albums);
-      }
-
-      _mergeState(data, path) {
-        console.log('merge state', window.performance.now());
-        if (data && path)
-          this.set(`mergedState.${path}`, data);
-        this.fire("update-state", this.mergedState);
+      _writeUserSettings(settings) {
+        // writing settings to server if signed in user had change them on client side
+        if (navigator.onLine && this.user) {
+          this.$.settings.write(settings);
+        }
       }
 
       fire(name, detail) {

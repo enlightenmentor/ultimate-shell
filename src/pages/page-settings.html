@@ -81,23 +81,53 @@
       }
 
       _checkboxChange(e) {
-        this.fire("settings-changed", {key: "checkbox", value: e.target.checked});
+        this.fire('state-action', {
+          type: 'SETTINGS_CHANGE',
+          payload: {
+            key: "checkbox",
+            value: e.target.checked
+          }
+        });
       }
 
       _radioChange(e) {
-        this.fire("settings-changed", {key: "radio", value: e.target.selected});
+        this.fire('state-action', {
+          type: 'SETTINGS_CHANGE',
+          payload: {
+            key: "radio",
+            value: e.target.selected
+          }
+        });
       }
 
       _sliderChange(e) {
-        this.fire("settings-changed", {key: "slider", value: e.target.value});
+        this.fire('state-action', {
+          type: 'SETTINGS_CHANGE',
+          payload: {
+            key: "slider",
+            value: e.target.value
+          }
+        });
       }
 
       _togglerChange(e) {
-        this.fire("settings-changed", {key: "toggler", value: e.target.checked});
+        this.fire('state-action', {
+          type: 'SETTINGS_CHANGE',
+          payload: {
+            key: "toggler",
+            value: e.target.checked
+          }
+        });
       }
 
       _dropdownChange(e) {
-        this.fire("settings-changed", {key: "dropdown", value: e.target.selected});
+        this.fire('state-action', {
+          type: 'SETTINGS_CHANGE',
+          payload: {
+            key: "dropdown",
+            value: e.target.selected
+          }
+        });
       }
 
       fire(name, detail) {

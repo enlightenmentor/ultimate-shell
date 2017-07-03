@@ -102,7 +102,7 @@
       </svg>
     </div>
 
-    <iron-pages selected="[[page]]" fallback-selection="404"
+    <iron-pages selected="[[page]]" fallback-selection="page404"
                 attr-for-selected="page" selected-attribute="current">
       <slot></slot>
     </iron-pages>
@@ -138,16 +138,10 @@
         this.squeezed = !this.squeezed;
       }
 
-      /*async*/ _newPage(page) {
+      _newPage(page) {
         this.loading = true;
-        
-        // try {
-        //   let results = await this.importLazyGroup(page)
-        //   this.loading = false;
-        //   this.fire("lazy-loaded", results);
-        // } catch(err) {
-        //   throw new Error(err);
-        // }
+        if (['home','one','two','settings'].indexOf(page) === -1)
+          page = 'page404';
 
         this.importLazyGroup(page)
           .then( results => {
@@ -157,7 +151,6 @@
           .catch( err => {
             throw new Error(err);
           })
-        
       }
 
       fire(name, detail) {

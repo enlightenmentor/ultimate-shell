@@ -1,19 +1,6 @@
-<link rel="import" href="app-data.html">
-<link rel="import" href="app-lifecycle.html">
-<link rel="import" href="app-snackbar.html" async>
-
 <script src="js/tools.js"></script>
 
 <dom-module id="app-state">
-  <template>
-    
-    <app-data id="data" state="[[state]]"></app-data>
-
-    <app-lifecycle></app-lifecycle>
-
-    <slot></slot>
-
-  </template>
   <script>
     class AppState extends Polymer.Element {
       static get is() {
@@ -25,87 +12,98 @@
           state: {
             type: Object,
             notify: true,
-            value: () => ({})
+            observer: '_storeState'
           },
-          defaultState: {
+          initialState: {
             type: Object,
             value: () => ({
               settings: {
-                checkbox: false,
+                checkbox: true,
                 radio: "first",
                 slider: 0,
                 toggler: false,
                 dropdown: 0
-              },
-              online: true,
+              }
             })
           }
         }
       }
 
-      constructor() {
-        super();
-        
-        this.set("state", Tools.mergeDeepWithNullToDelete(this.state, this.defaultState));
-      }
-
       connectedCallback() {
         super.connectedCallback();
 
-        window.addEventListener("online",                     (e) => this._handleOnline(e));
-        window.addEventListener("offline",                    (e) => this._handleOffline(e));
+        window.addEventListener('state-action', (e) => {
+          this.set('state', this.stateReducer(this.state, e.detail));
+        });
 
-        this.addEventListener("update-state",                 (e) => this._updateState(e.detail));
-        this.addEventListener("route-changed",                (e) => this._handleRoute(e.detail));
-        this.addEventListener("user-signin",                  (e) => this._handleUserIn(e.detail));
-        this.addEventListener("user-signout",                 (e) => this._handleUserOut());
-        this.addEventListener("settings-changed",             (e) => this._handleSettings(e.detail));
-        this.addEventListener("dialog-submitted",             (e) => console.log("Dialog result", e.detail));
+        window.addEventListener('app-connected', (e) => {
+          this.set('state', this.stateReducer(this.state));
+        })
       }
 
-      _updateState(newState) {
-        this.set("state", Tools.mergeDeepWithNullToDelete(this.state, newState));
+      stateReducer(state, action) {
+        if (!state) {
+          const storedState = this._getState();
+          if (storedState)
+            state = Object.assign({}, state, storedState);
+          else
+            state = Object.assign({}, state, this.initialState);
+        }
+
+        if (action) {
+          console.log(action.type, performance.now());
+          switch (action.type) {
+            case 'USER_IN': {
+              let user = action.payload;
+              state = Object.assign({}, state, {
+                user: user
+              });
+              break;
+            }
+            case 'USER_OUT': {
+              state = Object.assign({}, state, {
+                user: null
+              });
+              break;
+            }
+            case 'SETTINGS_CHANGE': {
+              let prop = action.payload;
+              let settings = Object.assign({}, state.settings, {
+                [prop.key]: prop.value
+              });
+
+              state = Object.assign({}, state, {
+                settings: settings
+              });
+              break;
+            }
+            case 'SERVER_ALBUMS': {
+              let albums = action.payload;
+              state = Object.assign({}, state, {
+                albums: albums
+              });
+              break;
+            }
+            case 'SERVER_SETTINGS': {
+              let settings = action.payload;
+              if (settings) {
+                state = Object.assign({}, state, {
+                  settings: settings
+                });
+              }
+              break;
+            }
+          }
+        }
+        return Tools.deepFreeze(state);
       }
 
-      _handleOnline(e) {
-        this.set('state.online', true);
-        this._showSnackbar("The device is online");
+      _storeState(state) {
+        localStorage.setItem('state', JSON.stringify(state));
       }
 
-      _handleOffline(e) {
-        this.set('state.online', false);
-        this._showSnackbar("The device is offline");
-      }
-
-      _handleRoute(route) {
-        if (["home","one","two","settings"].indexOf(route.segments[0]) === -1)
-          this.set('state.page', "page404");
-        else 
-          this.set('state.page', route.segments[0]);
-
-        this._makeTitle(this.state.page);
-      }
-
-      _makeTitle(page) {
-        document.title = `${page[0].toUpperCase() + page.substr(1)} - Ultimate Shell`;
-      }
-
-      _handleUserIn(user) {
-        this.set('state.user', user);
-        this.$.data.userIn(user);
-      }
-
-      _handleUserOut() {
-        this.set('state.user', null);
-        this.$.data.userOut();
-      }
-
-      _handleSettings(change) {
-        this.set(`state.settings.${change.key}`, change.value);
-      }
-
-      _showSnackbar(text) {
-        this.fire("show-snackbar", text);
+      _getState() {
+        return JSON.parse(localStorage.getItem('state'));
       }
 
       fire(name, detail) {
