@@ -26,7 +26,6 @@
     "paper-radio-group": "PolymerElements/paper-radio-group#^2.0.0",
     "paper-slider": "PolymerElements/paper-slider#^2.0.0",
     "paper-toggle-button": "PolymerElements/paper-toggle-button#^2.0.0",
-    "idb-promised": "jakearchibald/idb#^2.0.3",
-    "seamless-immutable": "rtfeldman/seamless-immutable#^7.1.2"
+    "idb-promised": "jakearchibald/idb#^2.0.3"
   }
 }
