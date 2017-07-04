@@ -32,70 +32,65 @@
       connectedCallback() {
         super.connectedCallback();
 
-        window.addEventListener('state-action', (e) => {
-          this.set('state', this.stateReducer(this.state, e.detail));
+        const listen = (name, callback) => {
+          window.addEventListener(name, callback);
+        }
+
+        listen('app-connected', (e) => {
+          let state;
+          if (!this.state) {
+            const storedState = this._getState();
+            if (storedState)
+              state = Object.assign({}, this.state, storedState);
+            else
+              state = Object.assign({}, this.state, this.initialState);
+          }
+          this.set('state', Tools.deepFreeze(state));
         });
 
-        window.addEventListener('app-connected', (e) => {
-          this.set('state', this.stateReducer(this.state));
-        })
-      }
+        listen('state-user-in', (e) => {
+          const user = e.detail;
+          const state = Object.assign({}, this.state, {
+            user: user
+          });
+          this.set('state', Tools.deepFreeze(state));
+        });
 
-      stateReducer(state, action) {
-        if (!state) {
-          const storedState = this._getState();
-          if (storedState)
-            state = Object.assign({}, state, storedState);
-          else
-            state = Object.assign({}, state, this.initialState);
-        }
+        listen('state-user-out', (e) => {
+          const state = Object.assign({}, this.state, {
+            user: null
+          });
+          this.set('state', Tools.deepFreeze(state));
+        });
 
-        if (action) {
-          console.log(action.type, performance.now());
-          switch (action.type) {
-            case 'USER_IN': {
-              let user = action.payload;
-              state = Object.assign({}, state, {
-                user: user
-              });
-              break;
-            }
-            case 'USER_OUT': {
-              state = Object.assign({}, state, {
-                user: null
-              });
-              break;
-            }
-            case 'SETTINGS_CHANGE': {
-              let prop = action.payload;
-              let settings = Object.assign({}, state.settings, {
-                [prop.key]: prop.value
-              });
+        listen('state-server-albums', (e) => {
+          const albums = e.detail;
+          const state = Object.assign({}, this.state, {
+            albums: albums
+          });
+          this.set('state', Tools.deepFreeze(state));
+        });
 
-              state = Object.assign({}, state, {
-                settings: settings
-              });
-              break;
-            }
-            case 'SERVER_ALBUMS': {
-              let albums = action.payload;
-              state = Object.assign({}, state, {
-                albums: albums
-              });
-              break;
-            }
-            case 'SERVER_SETTINGS': {
-              let settings = action.payload;
-              if (settings) {
-                state = Object.assign({}, state, {
-                  settings: settings
-                });
-              }
-              break;
-            }
+        listen('state-server-settings', (e) => {
+          const settings = e.detail;
+          if (settings) {
+            const state = Object.assign({}, this.state, {
+              settings: settings
+            });
+            this.set('state', Tools.deepFreeze(state));
           }
-        }
-        return Tools.deepFreeze(state);
+        });
+
+        listen('state-change-settings', (e) => {
+          const prop = e.detail;
+          const settings = Object.assign({}, this.state.settings, {
+            [prop.key]: prop.value
+          });
+          const state = Object.assign({}, this.state, {
+            settings: settings
+          });
+          this.set('state', Tools.deepFreeze(state));
+        });
       }
 
       _storeState(state) {

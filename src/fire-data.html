@@ -35,7 +35,8 @@
 
       listen(callback) {
         this._listenCallback = (snapshot) => {
-          return callback(snapshot.val());
+          if (snapshot.exists())
+            return callback(snapshot.val());
         };
         const ref = firebase.database().ref(this.path);
         ref.on('value', this._listenCallback);

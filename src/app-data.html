@@ -35,31 +35,20 @@
       async _appConnected() {
         // reading server albums (static data that everybody can see)
         const albums = await this.$.albums.read();
-        this.fire('state-action', {
-          type: 'SERVER_ALBUMS',
-          payload: albums
-        })
+        this.fire('state-server-albums', albums);
         // listening on changes of albums
-        this.$.albums.listen((data) => {
-          this.fire('state-action', {
-            type: 'SERVER_ALBUMS',
-            payload: data
-          })
+        this.$.albums.listen((albums) => {
+          this.fire('state-server-albums', albums);
         });
 
         // cheching if user was signed in last session
         let user = await this.$.auth.checkUser();
         if (user) {
           user = this._makeUser(user);
-          this.fire("state-action", {
-            type: "USER_IN",
-            payload: user
-          });
+          this.fire('state-user-in', user);
           this._readUserSettings(user);
         } else {
-          this.fire("state-action", {
-            type: "USER_OUT"
-          });
+          this.fire('state-user-out');
         }
       }
 
@@ -81,10 +70,7 @@
         try {
           const result = await this.$.auth.signIn();
           const user = this._makeUser(result.user);
-          this.fire("state-action", {
-            type: "USER_IN",
-            payload: user
-          });
+          this.fire('state-user-in', user);
           this._readUserSettings(user);
         } catch(err) {
           throw new Error(err);
@@ -97,9 +83,7 @@
         this.$.settings.stopListen();
         try {
           await this.$.auth.signOut();
-          this.fire("state-action", {
-            type: "USER_OUT"
-          });
+          this.fire('state-user-out');
         } catch(err) {
           throw new Error(err);
         }
@@ -114,26 +98,15 @@
         }
       }
 
-      _readUserSettings(user) {
+      async _readUserSettings(user) {
         // if user is in reading server user settings
         this.$.settings.setPath(`users/${user.uid}/settings`);
-        this.$.settings.read()
-          .then((settings) => {
-            if (settings) {
-              this.fire('state-action', {
-                type: 'SERVER_SETTINGS',
-                payload: settings
-              })
-            }
-          });
+        const settings = await this.$.settings.read();
+        if (settings)
+          this.fire('state-server-settings', settings);
         // listening on changes for user settings (relevant for data that can be changed not only by this user)
-        this.$.settings.listen((data) => {
-          if (data) {
-            this.fire('state-action', {
-              type: 'SERVER_SETTINGS',
-              payload: data
-            })
-          }
+        this.$.settings.listen((settings) => {
+          this.fire('state-server-settings', settings);
         });
       }
 
