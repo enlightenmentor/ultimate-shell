@@ -32,14 +32,13 @@
         window.addEventListener('offline', (e) => this._appOffline());
       }
 
-      _appConnected() {
+      async _appConnected() {
         // reading server albums (static data that everybody can see)
-        this.$.albums.read().then((albums) => {
-          this.fire('state-action', {
-            type: 'SERVER_ALBUMS',
-            payload: albums
-          })
-        });
+        const albums = await this.$.albums.read();
+        this.fire('state-action', {
+          type: 'SERVER_ALBUMS',
+          payload: albums
+        })
         // listening on changes of albums
         this.$.albums.listen((data) => {
           this.fire('state-action', {
@@ -49,57 +48,61 @@
         });
 
         // cheching if user was signed in last session
-        this.$.auth.checkUser().then((user) => {
-          if (user) {
-            user = this._makeUser(user);
-            this.fire("state-action", {
-              type: "USER_IN",
-              payload: user
-            });
-            this._readUserSettings(user);
-          } else {
-            this.fire("state-action", {
-              type: "USER_OUT"
-            });
-          }
-        });
+        let user = await this.$.auth.checkUser();
+        if (user) {
+          user = this._makeUser(user);
+          this.fire("state-action", {
+            type: "USER_IN",
+            payload: user
+          });
+          this._readUserSettings(user);
+        } else {
+          this.fire("state-action", {
+            type: "USER_OUT"
+          });
+        }
       }
 
       _appOnline() {
+        this.$.albums.activate();
+        this.$.settings.activate();
         this._writeUserSettings(this.userSettings);
         if (this.user) {
           this._readUserSettings(this.user);
         }
       }
 
-      signIn() {
-        this.$.auth.signIn()
-          .then((result) => {
-            const user = this._makeUser(result.user);
-            this.fire("state-action", {
-              type: "USER_IN",
-              payload: user
-            });
-            this._readUserSettings(user);
-          })
-          .catch((err) => {
-            throw new Error(err);
-          });
+      _appOffline() {
+        this.$.albums.deactivate();
+        this.$.settings.deactivate();
       }
 
-      signOut() {
-        // if user is out disconnecting user settings fire-data
-        this.$.settings.path = undefined;
-        this.$.settings.stopListen();
-        this.$.auth.signOut()
-          .then(() => {
-            this.fire("state-action", {
-              type: "USER_OUT"
-            });
-          })
-          .catch((err) => {
-            throw new Error(err);
+      async signIn() {
+        try {
+          const result = await this.$.auth.signIn();
+          const user = this._makeUser(result.user);
+          this.fire("state-action", {
+            type: "USER_IN",
+            payload: user
           });
+          this._readUserSettings(user);
+        } catch(err) {
+          throw new Error(err);
+        }
+      }
+
+      async signOut() {
+        // if user is out disconnecting user settings fire-data
+        this.$.settings.deactivate();
+        this.$.settings.stopListen();
+        try {
+          await this.$.auth.signOut();
+          this.fire("state-action", {
+            type: "USER_OUT"
+          });
+        } catch(err) {
+          throw new Error(err);
+        }
       }
 
       _makeUser(user) {
@@ -108,12 +111,13 @@
           email: user.email,
           photo: user.photoURL,
           uid: user.uid
-        };
+        }
       }
 
       _readUserSettings(user) {
         // if user is in reading server user settings
-        this.$.settings.read(`users/${user.uid}/settings`)
+        this.$.settings.setPath(`users/${user.uid}/settings`);
+        this.$.settings.read()
           .then((settings) => {
             if (settings) {
               this.fire('state-action', {
