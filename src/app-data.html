@@ -34,22 +34,25 @@
 
       async _appConnected() {
         // reading server albums (static data that everybody can see)
-        const albums = await this.$.albums.read();
-        this.fire('state-server-albums', albums);
-        // listening on changes of albums
-        this.$.albums.listen((albums) => {
-          this.fire('state-server-albums', albums);
-        });
+        const albumsPromise = this.$.albums.read()
+          .then((albums) => {
+            this.fire('state-server-albums', albums);
+          });
 
         // cheching if user was signed in last session
-        let user = await this.$.auth.checkUser();
+        const userPromise = this.$.auth.checkUser();
+        let user = await userPromise;
+        let settingsPromise = Promise.resolve();
         if (user) {
           user = this._makeUser(user);
           this.fire('state-user-in', user);
-          this._readUserSettings(user);
+          settingsPromise = this._readUserSettings(user);
         } else {
           this.fire('state-user-out');
         }
+        
+        await Promise.all([albumsPromise,userPromise,settingsPromise]);
+        this.fire('app-data-loaded');
       }
 
       _appOnline() {
@@ -80,7 +83,6 @@
       async signOut() {
         // if user is out disconnecting user settings fire-data
         this.$.settings.deactivate();
-        this.$.settings.stopListen();
         try {
           await this.$.auth.signOut();
           this.fire('state-user-out');
@@ -104,10 +106,6 @@
         const settings = await this.$.settings.read();
         if (settings)
           this.fire('state-server-settings', settings);
-        // listening on changes for user settings (relevant for data that can be changed not only by this user)
-        this.$.settings.listen((settings) => {
-          this.fire('state-server-settings', settings);
-        });
       }
 
       _writeUserSettings(settings) {
