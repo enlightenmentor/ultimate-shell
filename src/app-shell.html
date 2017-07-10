@@ -14,13 +14,13 @@
 
 <link rel="import" href="app-state.html">
 <link rel="import" href="app-data.html">
-<link rel="import" href="app-lifecycle.html">
 <link rel="import" href="app-router.html">
 <link rel="import" href="app-toolbar.html">
 <link rel="import" href="app-search.html">
 <link rel="import" href="app-drawer.html">
 <link rel="import" href="app-content.html">
 <link rel="import" href="pages/page-home.html">
+<link rel="import" href="app-snackbar.html" async>
 
 <link rel="import" href="css/app-theme.html" async>
 <link rel="import" href="css/css-reset.html" async>
@@ -97,20 +97,20 @@
       }
     </style>
 
-    <app-state state="{{state}}" history="{{stateHistory}}"></app-state>
+    <app-state state="{{state}}"></app-state>
 
-    <app-router default-url="home" route="{{route}}"></app-router>
+    <app-router default-url="home"></app-router>
 
-    <app-data id="data" user-settings="[[state.settings]]" user="[[state.user]]"></app-data>
+    <app-data id="data" user-settings="[[state.persistent.settings]]" user="[[state.persistent.user]]"></app-data>
 
     <iron-media-query query="(min-width: 600px)" query-matches="{{queryMin600}}"></iron-media-query>
     <iron-media-query query="(max-width: 900px)" query-matches="{{queryMax900}}"></iron-media-query>
 
-    <app-toolbar persistent="[[queryMin600]]" title="[[route.segments.0]]">
+    <app-toolbar persistent="[[queryMin600]]" title="[[state.session.route.segments.0]]">
       <paper-icon-button slot="menu" icon="menu" on-tap="_toggleDrawer"></paper-icon-button>
       <app-search slot="search" closed="[[!queryMin600]]"></app-search>
-      <paper-icon-button id="anonymPhoto" icon="social:person" hidden$="[[state.user]]" on-tap="_signIn"></paper-icon-button>
-      <div id="userPhoto" style="background-image: url([[state.user.photo]])" hidden$="[[!state.user]]" on-tap="_signOut"></div>
+      <paper-icon-button id="anonymPhoto" icon="social:person" hidden$="[[state.persistent.user]]" on-tap="_signIn"></paper-icon-button>
+      <div id="userPhoto" style="background-image: url([[state.persistent.user.photo]])" hidden$="[[!state.persistent.user]]" on-tap="_signOut"></div>
     </app-toolbar>
 
     <app-drawer id="drawer" opened="[[!queryMax900]]" persistent="[[queryMin600]]">
@@ -118,7 +118,7 @@
         Best App Shell
       </div>
       <div id="drawerMenu">
-        <iron-selector selected="[[route.segments.0]]" attr-for-selected="page">
+        <iron-selector selected="[[state.session.route.segments.0]]" attr-for-selected="page">
           <a href="/home" page="home" on-tap="_closeMobileDrawer">
             <paper-icon-item>
               <iron-icon icon="home" slot="item-icon"></iron-icon>
@@ -148,12 +148,12 @@
       </div>
     </app-drawer>
 
-    <app-content id="content" page="[[route.segments.0]]" persistent="[[!queryMin600]]" squeezed="[[!queryMax900]]">
-      <page-home page="home" user="[[state.user]]"></page-home>
+    <app-content id="content" page="[[state.session.route.segments.0]]" persistent="[[!queryMin600]]" squeezed="[[!queryMax900]]">
+      <page-home page="home" user="[[state.persistent.user]]"></page-home>
       <page-one page="one"></page-one>
-      <page-two page="two" albums="[[state.albums]]"></page-two>
+      <page-two page="two" albums="[[state.persistent.albums]]"></page-two>
       <page-404 page="page404"></page-404>
-      <page-settings page="settings" settings="[[state.settings]]"></page-settings>
+      <page-settings page="settings" settings="[[state.persistent.settings]]"></page-settings>
     </app-content>
 
     <app-snackbar id="snackbar"></app-snackbar>
@@ -188,6 +188,9 @@
         this.removeAttribute('unresolved');
         this.fire('app-connected');
         this.addEventListener("show-snackbar", (e) => this._showSnackbar(e.detail));
+        window.addEventListener("online", (e) => this._showSnackbar('The device is online.'));
+        window.addEventListener("offline", (e) => this._showSnackbar('The device is offline.'));
+        window.addEventListener("app-data-loaded", (e) => this._showSnackbar('All data loaded!'));
       }
 
       _signIn() {

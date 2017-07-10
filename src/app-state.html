@@ -1,19 +1,8 @@
 <script src="js/tools.js"></script>
+<script src="js/deepMerge.js"></script>
 
 <dom-module id="app-state">
-  <template>
-    <app-history id="history" history="{{history}}"></app-history>
-  </template>
   <script>
-    class StateHistory extends Array {
-      constructor() {
-        super();
-      }
-      newSnapshot(snapshot) {
-        this.push(snapshot);
-      }
-    }
-    
     class AppState extends Polymer.Element {
       static get is() {
         return "app-state";
@@ -24,7 +13,12 @@
           state: {
             type: Object,
             notify: true,
-            observer: '_storeState'
+            value: () => ({
+              history: {
+                all: [],
+                settings: []
+              }
+            })
           },
           initialState: {
             type: Object,
@@ -37,11 +31,6 @@
                 dropdown: 0
               }
             })
-          },
-          history: {
-            type: StateHistory,
-            notify: true,
-            value: () => new StateHistory()
           }
         }
       }
@@ -49,67 +38,97 @@
       connectedCallback() {
         super.connectedCallback();
 
-        const listen = (name, callback) => {
-          window.addEventListener(name, callback);
+        window.addEventListener('app-connected', this._appConnected.bind(this));
+        window.addEventListener('state-user-in', this._stateUserIn.bind(this));
+        window.addEventListener('state-user-out', this._stateUserOut.bind(this));
+        window.addEventListener('state-server-albums', this._stateServerAlbums.bind(this));
+        window.addEventListener('state-server-settings', this._stateServerSettings.bind(this));
+        window.addEventListener('state-change-settings', this._stateChangeSettings.bind(this));
+        window.addEventListener('state-change-route', this._stateChangeRoute.bind(this));
+
+      }
+
+      _updateState(statePrst, stateSess, action) {
+        this.set('state', {
+          session: stateSess,
+          persistent: statePrst,
+          history: AppState.addSnapshot(this.state.history, {
+            session: stateSess,
+            persistent: statePrst
+          }, action)
+        });
+        if (statePrst)
+          this._storeState(statePrst);
+      }
+
+      static addSnapshot(history, snapshot, action) {
+        const snap = {
+          action: action,
+          snapshot: snapshot,
+          timestamp: performance.now()
         }
 
-        listen('app-connected', (e) => {
-          console.log(e.type, performance.now());
-          let state;
-          if (!this.state) {
-            const storedState = this._getState();
-            if (storedState)
-              state = Tools.deepFreeze(Object.assign({}, this.state, storedState));
-            else
-              state = Tools.deepFreeze(Object.assign({}, this.state, this.initialState));
-          }
-          this.set('state', state);
-          this._stateSnapshot(state, e.type);
-        });
+        const newHistory = Object.assign(history);
+        newHistory.all = [snap].concat(history.all);
 
-        // just for logging
-        listen('app-data-loaded', (e) => {
-          console.log(e.type, performance.now());
-        });
+        if (action === 'state-change-settings')
+          newHistory.settings = [snap].concat(history.settings);
 
-        listen('state-user-in', (e) => {
-          console.log(e.type, performance.now());
-          const user = e.detail;
-          const state = Tools.deepFreeze(Tools.setIn(this.state, ['user'], user));
-          this.set('state', state);
-          this._stateSnapshot(state, e.type);
-        });
+        return newHistory;
+      }
 
-        listen('state-user-out', (e) => {
-          console.log(e.type, performance.now());
-          const state = Tools.deepFreeze(Tools.setIn(this.state, ['user'], null));
-          this.set('state', state);
-          this._stateSnapshot(state, e.type);
-        });
+      _appConnected(e) {
+        console.log(e.type, performance.now());
+        let statePrst;
+        if (!this.state.persistent) {
+          const storedState = this._getState();
+          if (storedState)
+            statePrst = Tools.deepFreeze(Object.assign(storedState));
+          else
+            statePrst = Tools.deepFreeze(Object.assign(this.initialState));
+        }
+        this._updateState(statePrst, this.state.session, e.type);
+      }
 
-        listen('state-server-albums', (e) => {
-          console.log(e.type, performance.now());
-          const albums = e.detail;
-          const state = Tools.deepFreeze(Tools.setIn(this.state, ['albums'], albums));
-          this.set('state', state);
-          this._stateSnapshot(state, e.type);
-        });
+      _stateUserIn(e) {
+        console.log(e.type, performance.now());
+        const user = e.detail;
+        const statePrst = Tools.deepFreeze(Tools.setIn(this.state.persistent, ['user'], user));
+        this._updateState(statePrst, this.state.session, e.type);
+      }
 
-        listen('state-server-settings', (e) => {
-          console.log(e.type, performance.now());
-          const settings = e.detail;
-          const state = Tools.deepFreeze(Tools.setIn(this.state, ['settings'], settings));
-          this.set('state', state);
-          this._stateSnapshot(state, e.type);
-        });
+      _stateUserOut(e) {
+        console.log(e.type, performance.now());
+        const statePrst = Tools.deepFreeze(Tools.setIn(this.state.persistent, ['user'], null));
+        this._updateState(statePrst, this.state.session, e.type);
+      }
 
-        listen('state-change-settings', (e) => {
-          console.log(e.type, performance.now());
-          const prop = e.detail;
-          const state = Tools.deepFreeze(Tools.setIn(this.state, ['settings', prop.key], prop.value));
-          this.set('state', state);
-          this._stateSnapshot(state, e.type);
-        });
+      _stateServerAlbums(e) {
+        console.log(e.type, performance.now());
+        const albums = e.detail;
+        const statePrst = Tools.deepFreeze(Tools.setIn(this.state.persistent, ['albums'], albums));
+        this._updateState(statePrst, this.state.session, e.type);
+      }
+
+      _stateServerSettings(e) {
+        console.log(e.type, performance.now());
+        const settings = e.detail;
+        const statePrst = Tools.deepFreeze(Tools.setIn(this.state.persistent, ['settings'], settings));
+        this._updateState(statePrst, this.state.session, e.type);
+      }
+
+      _stateChangeSettings(e) {
+        console.log(e.type, performance.now());
+        const prop = e.detail;
+        const statePrst = Tools.deepFreeze(Tools.setIn(this.state.persistent, ['settings', prop.key], prop.value));
+        this._updateState(statePrst, this.state.session, e.type);
+      }
+
+      _stateChangeRoute(e) {
+        console.log(e.type, performance.now());
+        const route = e.detail;
+        const stateSess = Tools.deepFreeze(Tools.setIn(this.state.session, ['route'], route));
+        this._updateState(this.state.persistent, stateSess, e.type);
       }
 
       _storeState(state) {
@@ -118,14 +137,6 @@
 
       _getState() {
         return JSON.parse(localStorage.getItem('state'));
-      }
-
-      _stateSnapshot(snapshot, action) {
-        this.history.newSnapshot({
-          action: action,
-          snapshot: snapshot,
-          timestamp: performance.now()
-        });
       }
 
       fire(name, detail) {
