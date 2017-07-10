@@ -33,25 +33,19 @@
       }
 
       async _appConnected() {
-        // reading server albums (static data that everybody can see)
-        const albumsPromise = this.$.albums.read()
-          .then((albums) => {
-            this.fire('state-server-albums', albums);
-          });
+        const albumsPromise = this._readServerAlbums();
+        const user = await this._checkUser();
 
-        // cheching if user was signed in last session
-        const userPromise = this.$.auth.checkUser();
-        let user = await userPromise;
-        let settingsPromise = Promise.resolve();
+        let settingsPromise;
         if (user) {
-          user = this._makeUser(user);
           this.fire('state-user-in', user);
           settingsPromise = this._readUserSettings(user);
         } else {
           this.fire('state-user-out');
+          settingsPromise = Promise.resolve();
         }
-        
-        await Promise.all([albumsPromise,userPromise,settingsPromise]);
+
+        await albumsPromise, await settingsPromise;
         this.fire('app-data-loaded');
       }
 
@@ -59,9 +53,6 @@
         this.$.albums.activate();
         this.$.settings.activate();
         this._writeUserSettings(this.userSettings);
-        if (this.user) {
-          this._readUserSettings(this.user);
-        }
       }
 
       _appOffline() {
@@ -72,7 +63,8 @@
       async signIn() {
         try {
           const result = await this.$.auth.signIn();
-          const user = this._makeUser(result.user);
+          const user = AppData.makeUser(result.user);
+          this.$.settings.activate();
           this.fire('state-user-in', user);
           this._readUserSettings(user);
         } catch(err) {
@@ -91,13 +83,25 @@
         }
       }
 
-      _makeUser(user) {
+      static makeUser(user) {
+        if (!user)
+          return user;
         return {
           name: user.displayName,
           email: user.email,
           photo: user.photoURL,
           uid: user.uid
         }
+      }
+
+      async _checkUser() {
+        const user = await this.$.auth.checkUser();
+        return AppData.makeUser(user);
+      }
+
+      async _readServerAlbums() {
+        const albums = await this.$.albums.read();
+        this.fire('state-server-albums', albums);
       }
 
       async _readUserSettings(user) {
