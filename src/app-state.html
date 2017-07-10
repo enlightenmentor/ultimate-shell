@@ -38,13 +38,13 @@
       connectedCallback() {
         super.connectedCallback();
 
-        window.addEventListener('app-connected', this._appConnected.bind(this));
-        window.addEventListener('state-user-in', this._stateUserIn.bind(this));
-        window.addEventListener('state-user-out', this._stateUserOut.bind(this));
-        window.addEventListener('state-server-albums', this._stateServerAlbums.bind(this));
-        window.addEventListener('state-server-settings', this._stateServerSettings.bind(this));
-        window.addEventListener('state-change-settings', this._stateChangeSettings.bind(this));
-        window.addEventListener('state-change-route', this._stateChangeRoute.bind(this));
+        window.addEventListener('app-connected',              this._appConnected.bind(this));
+        window.addEventListener('state-user-in',              this._stateUserIn.bind(this));
+        window.addEventListener('state-user-out',             this._stateUserOut.bind(this));
+        window.addEventListener('state-server-albums',        this._stateServerAlbums.bind(this));
+        window.addEventListener('state-server-settings',      this._stateServerSettings.bind(this));
+        window.addEventListener('state-change-settings',      this._stateChangeSettings.bind(this));
+        window.addEventListener('state-change-route',         this._stateChangeRoute.bind(this));
 
       }
 
