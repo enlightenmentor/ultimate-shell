@@ -16,7 +16,8 @@
           defaultUrl: String,
           route: {
             type: Object,
-            notify: true
+            notify: true,
+            observer: '_routeChanged'
           }
         }
       }
@@ -28,7 +29,10 @@
       _pathChanged(defaultUrl) {
         if (location.pathname === "/" && defaultUrl)
           this.setUrl(`/${defaultUrl}`);
-        this.set('route', AppRouter.parseUrl(location));
+        if (!this.route)
+          this.set('route', AppRouter.parseUrl(location));
+        else if (this.route.url !== location.pathname)
+          this.set('route', AppRouter.parseUrl(location));
       }
 
       setUrl(url) {
@@ -40,6 +44,10 @@
 
       getUrl() {
         AppRouter.parseUrl(location);
+      }
+
+      _routeChanged(route) {
+        this.fire('state-change-route', route);
       }
 
       fire(name, detail) {
