@@ -1,5 +1,4 @@
 const mainCacheName = 'ULTIMATE-SHELL-CACHE';
-var sw = [];
 
 const filesToCache = [
   '.',
@@ -140,11 +139,11 @@ const fetchResponse = async (cacheName, request) => {
   let response = await cache.match(request);
   if (!response) {
     response = await fetch(request);
-    if (request.method == 'GET')
+    if (request.method === 'GET')
       cache.put(request, response.clone());
   }
   return response;
-}
+};
 
 self.addEventListener('install', event => {
   event.waitUntil(
@@ -162,4 +161,4 @@ self.addEventListener('fetch', event => {
   event.respondWith(
     fetchResponse(mainCacheName, event.request)
   )
-})
+});
