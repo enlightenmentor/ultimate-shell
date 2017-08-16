@@ -79,8 +79,8 @@
 
       _appConnected(e) {
         console.log(e.type, performance.now());
-        let statePrst;
-        if (!this.state.persistent) {
+        let statePrst = this.state.persistent;
+        if (!statePrst) {
           const storedState = this._getState();
           if (storedState)
             statePrst = Tools.deepFreeze(Object.assign(storedState));
